@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
+    // container stylings
     container: {
         flex: 1,
     },
@@ -11,6 +12,8 @@ export default StyleSheet.create({
         gap: 20,
         marginInline: 30,
     },
+
+    // input stylings
     inputLabel: {
         fontSize: 18,
         fontWeight: 700,
@@ -22,11 +25,12 @@ export default StyleSheet.create({
         fontSize: 20,
         padding: 10,
     },
+
+    // button stylings
     button: {
         borderColor: '#000',
         borderWidth: 1,
         borderRadius: 10,
-        backgroundColor: '#DDD',
         padding: 10,
     },
     buttonText: {
@@ -34,10 +38,20 @@ export default StyleSheet.create({
         fontWeight: 700,
         textAlign: 'center',
     },
+    buttonPlain: {
+        backgroundColor: '#DDD',
+    },
+    buttonDisabled: {
+        backgroundColor: '#AAA',
+    },
+    
+    // link stylings
     linkText: {
         fontSize: 18,
         textDecorationLine: 'underline'
     },
+
+    // misc stylings
     errorMessage: {
         color: '#B00',
         fontSize: 18,

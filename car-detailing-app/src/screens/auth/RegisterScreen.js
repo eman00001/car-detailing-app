@@ -12,10 +12,12 @@ export default function RegisterScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleRegister = async () => {
         setError(''); // reset error message
+        setIsLoading(true); // begin loading
 
         // if name field is empty, show error and cancel register
         if (name.trim().length === 0) {
@@ -32,11 +34,13 @@ export default function RegisterScreen() {
         try {
             const response = await createUserWithEmailAndPassword(firebase_auth, email, password);
             await updateProfile(response.user, { displayName: name }); // record user's name in user info
+            // loading finishes when App.js handles auth, so do not change here
         } catch (error) {
+            console.warn(error);
             // if error, display error message on screen and log to console
             const errorMessage = getFirebaseAuthErrorMessage(error);
             setError(errorMessage);
-            console.warn(error);
+            setIsLoading(false); // finish loading
         }
     }
 
@@ -91,7 +95,7 @@ export default function RegisterScreen() {
                 </View>
                 <Pressable
                     onPress={handleRegister}
-                    style={styles.button}
+                    style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
                 >
                     <Text style={styles.buttonText}>
                         Register

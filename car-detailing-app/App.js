@@ -30,7 +30,6 @@ export default function App() {
                             where('uid', '==', user.uid)
                         )
                     );
-                    console.log(querySnapshot);
                     if (querySnapshot.empty) {
                         setIsDetailer(false);
                     } else {

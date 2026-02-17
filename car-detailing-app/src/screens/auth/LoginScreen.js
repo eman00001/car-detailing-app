@@ -11,17 +11,21 @@ export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSignIn = async () => {
         setError(''); // reset error message
+        setIsLoading(true); // begin loading
 
         try {
             const response = await signInWithEmailAndPassword(firebase_auth, email, password);
+            // loading finishes when App.js handles auth, so do not change here
         } catch (error) {
+            console.warn(error);
             // if error, display error message on screen and log to console
             const errorMessage = getFirebaseAuthErrorMessage(error);
             setError(errorMessage);
-            console.warn(error);
+            setIsLoading(false); // finish loading
         }
     }
 
@@ -59,7 +63,7 @@ export default function LoginScreen({ navigation }) {
                 </View>
                 <Pressable
                     onPress={handleSignIn}
-                    style={styles.button}
+                    style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
                 >
                     <Text style={styles.buttonText}>
                         Sign In
