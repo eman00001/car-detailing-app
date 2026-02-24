@@ -1,8 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { View, TextInput, Text, Pressable } from 'react-native';
-
 import styles from '../../stylesheet';
+
 import { getFirebaseAuthErrorMessage } from '../../firebaseUtils';
 import { firebase_auth } from '../../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';

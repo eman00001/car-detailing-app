@@ -4,8 +4,9 @@ import { View, TextInput, Text, Pressable } from 'react-native';
 
 import styles from '../../stylesheet';
 import { getFirebaseAuthErrorMessage } from '../../firebaseUtils';
-import { firebase_auth } from '../../firebaseConfig';
+import { firebase_auth, db } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function RegisterScreen() {
     const [name, setName] = useState('');
@@ -33,7 +34,8 @@ export default function RegisterScreen() {
 
         try {
             const response = await createUserWithEmailAndPassword(firebase_auth, email, password);
-            await updateProfile(response.user, { displayName: name }); // record user's name in user info
+            const docRef = doc(db, 'users', response.uid); // store user's name in Firestore
+            await setDoc(docRef, { name }); 
             // loading finishes when App.js handles auth, so do not change here
         } catch (error) {
             console.warn(error);
