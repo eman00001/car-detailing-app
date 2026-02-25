@@ -21,6 +21,7 @@ export default function ChatMessagesScreen({ route }) {
     const [userUid, setUserUid] = useState(null);
     const [isSending, setIsSending] = useState(false);
     const [sendErrorMessage, setSendErrorMessage] = useState(null);
+
     const navigationHeaderHeight = useHeaderHeight();
     const chatId = route.params.id;
 
@@ -49,7 +50,7 @@ export default function ChatMessagesScreen({ route }) {
         // query messages for chat specified by Chat ID passed on route params, order in order sent
         const messagesQuery = query(
             collection(db, 'chats', chatId, 'messages'),
-            orderBy('timestamp', 'asc'),
+            orderBy('timestamp', 'desc'), // want to have most recent at bottom, since FlatList inverted means want first
         );
         // every time query contents change, update messages state
         const unsubscribe = onSnapshot(messagesQuery, async (messagesQuerySnapshot) => {
@@ -71,6 +72,7 @@ export default function ChatMessagesScreen({ route }) {
         return unsubscribe;
     }, [userUid]);
 
+    // function sends the current message that is written in the message input box, storing it in the Firestore database
     const handleSendMessage = async () => {
         if (currMessage.trim().length === 0) return; // do not allow send empty message
         try {
@@ -129,6 +131,7 @@ export default function ChatMessagesScreen({ route }) {
                         </View>
                     )}
                     keyExtractor={item => item.id}
+                    inverted
                 />
                 <View
                     style={chatStyles.messageInputContainer}
