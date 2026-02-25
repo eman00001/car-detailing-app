@@ -27,16 +27,16 @@ export default function App() {
             if (user) {
                 try {
                     const docSnapshot = await getDoc(doc(db, 'users', user.uid));
+                    // store user ID in async storage for quick retrieval
+                    await AsyncStorage.setItem('userUid', user.uid);
                     if (docSnapshot.exists()) {
                         const data = docSnapshot.data();
                         setIsDetailer(data.isDetailer ?? false); // if no isDetailer field, is customer
+                        await AsyncStorage.setItem('userName', data.name); // store user name in async storage for quick retrieval
                     } else {
                         setIsDetailer(false); // if not found, default to customer
                     }
                     setIsSignedIn(true);
-                    // store user info in async storage for quick retrieval
-                    await AsyncStorage.setItem('userUid', user.uid);
-                    await AsyncStorage.setItem('userName', data.name);
 
                 } catch (error) {
                     console.warn(error);
