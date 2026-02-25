@@ -33,8 +33,6 @@ function isWithinWeek(currDate, checkDate) {
 
 // function formats a date and time into a friendly format, supporting today, yesterday, and days of weeks
 export function formatDateTime(dateTime) {
-    console.log(dateTime);
-
     // get current date to see today
     const today = new Date();
 
@@ -46,11 +44,11 @@ export function formatDateTime(dateTime) {
 
     // if dateTime is today, set day string to today
     if (isSameDay(dateTime, today)) {
-        dayString = 'today';
+        dayString = 'Today';
 
     // if dateTime is yesterday, set day string to yesterday
     } else if (isSameDay(dateTime, yesterday)) {
-        dayString = 'yesterday';
+        dayString = 'Yesterday';
 
     // if dateTime is within week, set day string to day of week of date
     } else if (isWithinWeek(dateTime, today)) {

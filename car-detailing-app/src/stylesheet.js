@@ -5,6 +5,11 @@ export default StyleSheet.create({
     container: {
         flex: 1,
     },
+    containerCentered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     authContainer: {
         flex: 1,
         justifyContent: 'center',

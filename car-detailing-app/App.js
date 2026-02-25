@@ -17,13 +17,19 @@ import DetailerJobsScreen from './src/screens/detailer/DetailerJobsScreen';
 import CustomerDashboardScreen from './src/screens/customer/CustomerDashboardScreen';
 import ChatsListScreen from './src/screens/chat/ChatsListScreen';
 import ChatMessagesScreen from './src/screens/chat/ChatMessagesScreen';
+import ErrorScreen from './src/screens/ErrorScreen';
+import LoadingScreen from './src/screens/LoadingScreen';
 
 export default function App() {
+    const [loading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState(null);
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [isDetailer, setIsDetailer] = useState(false);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(firebase_auth, async (user) => {
+            setLoading(true); // begin loading
+            setErrorMessage(null); // remove error message
             if (user) {
                 try {
                     const docSnapshot = await getDoc(doc(db, 'users', user.uid));
@@ -38,16 +44,38 @@ export default function App() {
                     }
                     setIsSignedIn(true);
 
+                // if something went wrong, show error message on screen
                 } catch (error) {
                     console.warn(error);
+                    setErrorMessage('Something went wrong');
                 }
             } else {
                 setIsSignedIn(false);
             }
+
+            setLoading(false); // stop loading once finish
         });
 
         return unsubscribe;
     }, []); // setup listner on load only
+
+    // if loading, show loading icon
+    if (loading) {
+        return (
+            <SafeAreaProvider>
+                <LoadingScreen />
+            </SafeAreaProvider>
+        );
+    }
+
+    // if an error is found, display it to screen
+    if (errorMessage != null) {
+        return (
+            <SafeAreaProvider>
+                <ErrorScreen errorMessage={errorMessage} />
+            </SafeAreaProvider>
+        );
+    }
 
     let Navigation;
 
