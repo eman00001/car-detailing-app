@@ -13,6 +13,38 @@ export default StyleSheet.create({
         marginInline: 30,
     },
 
+    // heading stylings
+    h1: {
+        fontSize: 32,
+        fontWeight: "700",
+        lineHeight: 40,
+        marginBottom: 12,
+    },
+    h2: {
+        fontSize: 26,
+        fontWeight: "700",
+        lineHeight: 34,
+        marginBottom: 10,
+    },
+    h3: {
+        fontSize: 22,
+        fontWeight: "600",
+        lineHeight: 30,
+        marginBottom: 8,
+    },
+    h4: {
+        fontSize: 18,
+        fontWeight: "600",
+        lineHeight: 24,
+        marginBottom: 6,
+    },
+    h5: {
+        fontSize: 16,
+        fontWeight: "500",
+        lineHeight: 22,
+        marginBottom: 4,
+    },
+
     // input stylings
     inputLabel: {
         fontSize: 18,
