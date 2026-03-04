@@ -87,5 +87,39 @@ export default StyleSheet.create({
     errorMessage: {
         color: '#B00',
         fontSize: 18,
-    }
+    },
+    card: {
+        backgroundColor: "#FFFFFF",
+        padding: 18,
+        borderRadius: 14,
+        marginBottom: 16,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    left: {
+        flex: 1,
+    },
+    right: {
+        justifyContent: "center",
+        alignItems: "flex-end",
+    },
+    service: {
+        fontSize: 18,
+        fontWeight: "600",
+        marginBottom: 4,
+    },
+    date: {
+        fontSize: 14,
+        color: "#666",
+        marginBottom: 8,
+    },
+    status: {
+        fontSize: 14,
+        fontWeight: "700",
+    },
 });
