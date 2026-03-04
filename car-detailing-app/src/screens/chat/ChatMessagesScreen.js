@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, FlatList, Image, KeyboardAvoidingView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { formatDateTime } from '../../utils';
@@ -13,14 +13,19 @@ import { onSnapshot, collection, doc, query, orderBy, setDoc, serverTimestamp } 
 import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
 
+import * as ImagePicker from 'expo-image-picker';
+import { CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET, uploadImages } from '../../imageUploadUtils';
+
 export default function ChatMessagesScreen({ route }) {
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
     const [messages, setMessages] = useState([]);
     const [currMessage, setCurrMessage] = useState('');
-    const [userUid, setUserUid] = useState(null);
+    const [currImages, setCurrImages] = useState([]);
+    const [isUploadingImages, setIsUploadingImages] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [sendErrorMessage, setSendErrorMessage] = useState(null);
+    const [userUid, setUserUid] = useState(null);
 
     const navigationHeaderHeight = useHeaderHeight();
     const chatId = route.params.id;
@@ -72,26 +77,52 @@ export default function ChatMessagesScreen({ route }) {
         return unsubscribe;
     }, [userUid]);
 
+    // function adds an image or multiple to the message that is currently being written
+    const handleUploadImage = async () => {
+        try {
+            setIsUploadingImages(true); // being uploading state
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: false,
+                allowsMultipleSelection: true,
+            });
+            if (!result.canceled) {
+                setCurrImages(prevImages => [...prevImages, ...result.assets.map(image => image.uri)]);
+            }
+        } catch (e) {
+            console.error(e);
+            setSendErrorMessage('Failed to upload images');
+        } finally {
+            setIsUploadingImages(false); // finish uploading state
+        }
+    };
+
     // function sends the current message that is written in the message input box, storing it in the Firestore database
     const handleSendMessage = async () => {
-        if (currMessage.trim().length === 0) return; // do not allow send empty message
+        if (currMessage.trim().length === 0 && currImages.length === 0) return; // do not allow send empty message
         try {
             setIsSending(true); // begin sending state
             setSendErrorMessage(null); // remove error message and try again
+
+            const fileURLs = await uploadImages(currImages, CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET);
+            console.log(fileURLs);
+
             const messageDocRef = doc(collection(db, 'chats', chatId, 'messages'));
             await setDoc(messageDocRef, {
                 userId: userUid,
                 content: currMessage,
+                attachments: fileURLs,
                 timestamp: serverTimestamp(),
             });
-            setCurrMessage(''); // clear current message
+            setCurrMessage(''); // clear current message and attachments
+            setCurrImages([]);  //
         } catch (e) {
             console.error(e);
             setSendErrorMessage('Could not send message');
         } finally {
             setIsSending(false); // finish sending state
         }
-    }
+    };
 
     // if loading, show loading icon
     if (loading) {
@@ -125,7 +156,21 @@ export default function ChatMessagesScreen({ route }) {
                                 ...chatStyles.messageBox,
                                 ...(item.isOwnMessage && chatStyles.ownMessage)
                             }}>
-                                <Text>{item.content}</Text>
+                                {item.content && (
+                                    <Text style={chatStyles.messageText}>
+                                        {item.content}
+                                    </Text>
+                                )}
+                                {item.attachments?.map(uri => (
+                                    <Image
+                                        key={uri}
+                                        style={{
+                                            ...chatStyles.messageAttachment,
+                                            ...(item.isOwnMessage && chatStyles.ownMessageAttachment)
+                                        }}
+                                        source={{ uri }}
+                                    />
+                                ))}
                             </View>
                             <Text>{item.dateTimeString}</Text>
                         </View>
@@ -136,6 +181,13 @@ export default function ChatMessagesScreen({ route }) {
                 <View
                     style={chatStyles.messageInputContainer}
                 >
+                    <Pressable
+                        style={{ ...chatStyles.currMessageBtn, ...(isUploadingImages && chatStyles.currMessageBtnSending) }}
+                        disabled={isUploadingImages || isSending}
+                        onPress={handleUploadImage}
+                    >
+                        <Text style={chatStyles.currMessageBtnText}>Image</Text>
+                    </Pressable>
                     <View style={chatStyles.messageInput}>
                         {sendErrorMessage != null && (
                             <Text style={styles.errorMessage}>{sendErrorMessage}</Text>
@@ -147,11 +199,11 @@ export default function ChatMessagesScreen({ route }) {
                         />
                     </View>
                     <Pressable
-                        style={{ ...chatStyles.messageSendBtn, ...(isSending && chatStyles.messageSendBtnSending) }}
+                        style={{ ...chatStyles.currMessageBtn, ...(isSending && chatStyles.currMessageBtnSending) }}
                         disabled={isSending}
                         onPress={handleSendMessage}
                     >
-                        <Text style={chatStyles.messageSendBtnText}>Send</Text>
+                        <Text style={chatStyles.currMessageBtnText}>Send</Text>
                     </Pressable>
                 </View>
             </KeyboardAvoidingView>
@@ -175,11 +227,25 @@ const chatStyles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         borderEndStartRadius: 0, // make one corner sharp so looks like conventional speech box
+        gap: 12,
     },
     ownMessage: { // change color and direction of speech arrow if own message
         backgroundColor: '#DDF',
         borderEndStartRadius: 12,
         borderEndEndRadius: 0,
+        alignItems: 'flex-end',
+    },
+    messageText: {
+
+    },
+    messageAttachment: {
+        backgroundColor: '#FFF8',
+        width: 200,
+        aspectRatio: 1,
+        resizeMode: 'contain',
+    },
+    ownMessageAttachment: {
+        alignSelf: 'flex-end', // if own message attachment, push to right of screen
     },
     messageInputContainer: {
         borderWidth: 1,
@@ -193,15 +259,15 @@ const chatStyles = StyleSheet.create({
     messageInput: {
         flex: 1,
     },
-    messageSendBtn: {
+    currMessageBtn: {
         backgroundColor: '#888',
         padding: 6,
         borderRadius: 6,
     },
-    messageSendBtnSending: {
+    currMessageBtnSending: {
         backgroundColor: '#555',
     },
-    messageSendBtnText: {
+    currMessageBtnText: {
         color: '#FFF',
         fontWeight: 700,
     }
