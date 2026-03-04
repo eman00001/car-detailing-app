@@ -17,7 +17,7 @@ function isSameDay(date1, date2) {
 }
 
 // function checks if date is within one week of another
-function isWithinWeek(currDate, checkDate) {
+function isWithinWeek(checkDate, currDate) {
     currDate = new Date(currDate);   // create copies so don't mess with references
     checkDate = new Date(checkDate);
 
@@ -25,7 +25,7 @@ function isWithinWeek(currDate, checkDate) {
     checkDate.setHours(0, 0, 0, 0);
 
     const lastWeekDate = new Date(currDate);  // find last week's date
-    currDate.setDate(currDate.getDate() - 7);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
 
     // see if the check date is after last week and not passed the current date
     return checkDate > lastWeekDate && checkDate <= currDate;
