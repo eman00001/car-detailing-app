@@ -18,6 +18,38 @@ export default StyleSheet.create({
         marginInline: 30,
     },
 
+    // heading stylings
+    h1: {
+        fontSize: 32,
+        fontWeight: "700",
+        lineHeight: 40,
+        marginBottom: 12,
+    },
+    h2: {
+        fontSize: 26,
+        fontWeight: "700",
+        lineHeight: 34,
+        marginBottom: 10,
+    },
+    h3: {
+        fontSize: 22,
+        fontWeight: "600",
+        lineHeight: 30,
+        marginBottom: 8,
+    },
+    h4: {
+        fontSize: 18,
+        fontWeight: "600",
+        lineHeight: 24,
+        marginBottom: 6,
+    },
+    h5: {
+        fontSize: 16,
+        fontWeight: "500",
+        lineHeight: 22,
+        marginBottom: 4,
+    },
+
     // input stylings
     inputLabel: {
         fontSize: 18,
@@ -74,5 +106,39 @@ export default StyleSheet.create({
         fontWeight: 700,
         borderRadius: '50%',
         textAlign: 'center',
+    },
+    card: {
+        backgroundColor: "#FFFFFF",
+        padding: 18,
+        borderRadius: 14,
+        marginBottom: 16,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    left: {
+        flex: 1,
+    },
+    right: {
+        justifyContent: "center",
+        alignItems: "flex-end",
+    },
+    service: {
+        fontSize: 18,
+        fontWeight: "600",
+        marginBottom: 4,
+    },
+    date: {
+        fontSize: 14,
+        color: "#666",
+        marginBottom: 8,
+    },
+    status: {
+        fontSize: 14,
+        fontWeight: "700",
     },
 });

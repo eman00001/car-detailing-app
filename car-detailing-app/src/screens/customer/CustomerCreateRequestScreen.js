@@ -1,3 +1,3 @@
-export default function CustomerCreateRequestScreen() {
+export default function CustomerCreateRequestScreen({navigation}) {
     
 }
