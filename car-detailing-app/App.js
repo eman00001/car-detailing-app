@@ -69,6 +69,7 @@ export default function App() {
                             <Tab.Screen name="Customer Dashboard" component={CustomerDashboardScreen} />
                             <Tab.Screen name="Customer Chat" component={ChatScreen} />
                             <Tab.Screen name="Log Out" component={LogOutScreen} />
+                            <Tab.Screen name="Create Request" component={CustomerCreateRequestScreen} />
                         </Tab.Navigator>
                     </NavigationContainer>
                 </SafeAreaProvider>
