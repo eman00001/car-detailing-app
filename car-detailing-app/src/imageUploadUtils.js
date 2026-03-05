@@ -37,3 +37,10 @@ export async function uploadImages(iamgeURIs, uploadPreset) {
     );
     return fileURLs.filter(url => url != null); // remove failed uploads
 }
+
+// function adds transformations to a cloudinary URI by using the transformation URL API
+export function addTransformationsToCloudinaryUri(uri, transformations) {
+    const uriComponents = uri.split('/'); // separate out components of URI
+    uriComponents.splice(-3, 0, transformations); // add new section at third from last component, with transformations
+    return uriComponents.join('/'); // return reconstructed URI
+}

@@ -14,7 +14,11 @@ import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
 
 import * as ImagePicker from 'expo-image-picker';
-import { CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET, uploadImages } from '../../imageUploadUtils';
+import {
+    CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET,
+    uploadImages,
+    addTransformationsToCloudinaryUri
+} from '../../imageUploadUtils';
 
 export default function ChatMessagesScreen({ route }) {
     const [loading, setLoading] = useState(true);
@@ -97,15 +101,23 @@ export default function ChatMessagesScreen({ route }) {
         }
     };
 
+    // function removes the specified image from the current list of images to be sent in the message
+    const removeCurrImage = (imageUri) => {
+        setCurrImages(prevImages => prevImages.filter((uri) => uri !== imageUri));
+    }
+
     // function sends the current message that is written in the message input box, storing it in the Firestore database
     const handleSendMessage = async () => {
-        if (currMessage.trim().length === 0 && currImages.length === 0) return; // do not allow send empty message
+        if (currMessage.trim().length === 0 && currImages.length === 0) { // do not allow send empty message
+            setSendErrorMessage('Cannot send empty message');
+            return;
+        }
+
         try {
             setIsSending(true); // begin sending state
             setSendErrorMessage(null); // remove error message and try again
 
             const fileURLs = await uploadImages(currImages, CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET);
-            console.log(fileURLs);
 
             const messageDocRef = doc(collection(db, 'chats', chatId, 'messages'));
             await setDoc(messageDocRef, {
@@ -168,7 +180,9 @@ export default function ChatMessagesScreen({ route }) {
                                             ...chatStyles.messageAttachment,
                                             ...(item.isOwnMessage && chatStyles.ownMessageAttachment)
                                         }}
-                                        source={{ uri }}
+                                        // add width of 200 transformation to image so load faster
+                                        width="200"
+                                        source={{ uri: addTransformationsToCloudinaryUri(uri, 'w_200') }}
                                     />
                                 ))}
                             </View>
@@ -181,30 +195,53 @@ export default function ChatMessagesScreen({ route }) {
                 <View
                     style={chatStyles.messageInputContainer}
                 >
-                    <Pressable
-                        style={{ ...chatStyles.currMessageBtn, ...(isUploadingImages && chatStyles.currMessageBtnSending) }}
-                        disabled={isUploadingImages || isSending}
-                        onPress={handleUploadImage}
-                    >
-                        <Text style={chatStyles.currMessageBtnText}>Image</Text>
-                    </Pressable>
-                    <View style={chatStyles.messageInput}>
-                        {sendErrorMessage != null && (
-                            <Text style={styles.errorMessage}>{sendErrorMessage}</Text>
-                        )}
-                        <TextInput
-                            multiline
-                            value={currMessage}
-                            onChangeText={setCurrMessage}
+                    {sendErrorMessage != null && (
+                        <Text style={styles.errorMessage}>{sendErrorMessage}</Text>
+                    )}
+                    {currImages.length > 0 && (
+                        <FlatList
+                            contentContainerStyle={chatStyles.messageInputAttachmentsRow}
+                            data={currImages}
+                            renderItem={({ item }) => (
+                                <Pressable
+                                    onPress={() => removeCurrImage(item)}
+                                >
+                                    <Image
+                                        style={chatStyles.messageInputAttachment}
+                                        source={{ uri: item }}
+                                    />
+                                    <Text style={styles.closeIcon}>X</Text>
+                                </Pressable>
+                            )}
+                            keyExtractor={item => item}
+                            horizontal={true}
                         />
-                    </View>
-                    <Pressable
-                        style={{ ...chatStyles.currMessageBtn, ...(isSending && chatStyles.currMessageBtnSending) }}
-                        disabled={isSending}
-                        onPress={handleSendMessage}
+                    )}
+                    <View
+                        style={chatStyles.messageInputRow}
                     >
-                        <Text style={chatStyles.currMessageBtnText}>Send</Text>
-                    </Pressable>
+                        <Pressable
+                            style={{ ...chatStyles.currMessageBtn, ...(isUploadingImages && chatStyles.currMessageBtnSending) }}
+                            disabled={isUploadingImages || isSending}
+                            onPress={handleUploadImage}
+                        >
+                            <Text style={chatStyles.currMessageBtnText}>Image</Text>
+                        </Pressable>
+                        <View style={chatStyles.messageInput}>
+                            <TextInput
+                                multiline
+                                value={currMessage}
+                                onChangeText={setCurrMessage}
+                            />
+                        </View>
+                        <Pressable
+                            style={{ ...chatStyles.currMessageBtn, ...(isSending && chatStyles.currMessageBtnSending) }}
+                            disabled={isSending}
+                            onPress={handleSendMessage}
+                        >
+                            <Text style={chatStyles.currMessageBtnText}>Send</Text>
+                        </Pressable>
+                    </View>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -240,7 +277,6 @@ const chatStyles = StyleSheet.create({
     },
     messageAttachment: {
         backgroundColor: '#FFF8',
-        width: 200,
         aspectRatio: 1,
         resizeMode: 'contain',
     },
@@ -248,13 +284,27 @@ const chatStyles = StyleSheet.create({
         alignSelf: 'flex-end', // if own message attachment, push to right of screen
     },
     messageInputContainer: {
+        backgroundColor: '#EEE',
+        borderTopColor: '#DDD',
+        borderTopWidth: 2,
+        padding: 12,
+        gap: 6,
+    },
+    messageInputAttachmentsRow: {
+        gap: 6,
+    },
+    messageInputAttachment: {
+        width: 100,
+        height: 100,
+    },
+    messageInputRow: {
         borderWidth: 1,
         borderRadius: 6,
-        margin: 12,
         padding: 12,
         flexDirection: 'row',
         justifyContent: 'stretch',
         alignItems: 'center',
+        gap: 12,
     },
     messageInput: {
         flex: 1,
