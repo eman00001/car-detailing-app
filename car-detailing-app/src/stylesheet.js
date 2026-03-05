@@ -5,6 +5,11 @@ export default StyleSheet.create({
     container: {
         flex: 1,
     },
+    containerCentered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     authContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -87,6 +92,20 @@ export default StyleSheet.create({
     errorMessage: {
         color: '#B00',
         fontSize: 18,
+    },
+    closeIcon: {
+        backgroundColor: '#DDD',
+        color: '#555',
+        position: 'absolute',
+        right: 6,
+        top: 6,
+        width: 20,
+        height: 20,
+        fontSize: 18,
+        lineHeight: 20,
+        fontWeight: 700,
+        borderRadius: '50%',
+        textAlign: 'center',
     },
     card: {
         backgroundColor: "#FFFFFF",

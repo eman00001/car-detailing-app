@@ -2,6 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, FlatList, Pressable } from 'react-native';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 import styles from '../../stylesheet';
 
@@ -13,9 +14,10 @@ const fakeData = [
   { id: "4", service: "Ceramic Coating", date: "March 5, 2026", status: "issue" },
 ];
 
-export default function CustomerDashboardScreen({ navigation }) {
+export default function CustomerDashboardScreen() {
     const [name, setName] = useState(null);
     const [isLoading, setLoading] = useState(true);
+    const navigation = useNavigation();
 
      const renderItem = ({ item }) => (
     <View style={styles.card}>
