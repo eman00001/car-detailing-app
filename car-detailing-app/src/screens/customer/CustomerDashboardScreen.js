@@ -1,25 +1,24 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, FlatList, Pressable } from 'react-native';
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { collection, doc, query, where, onSnapshot, getDoc, getDocs } from 'firebase/firestore';
 
 import styles from '../../stylesheet';
-
-const auth = getAuth();
-const fakeData = [
-  { id: "1", service: "Full Interior Detail", date: "March 10, 2026", status: "pending" },
-  { id: "2", service: "Exterior Wash & Wax", date: "March 18, 2026", status: "upcoming" },
-  { id: "3", service: "Engine Bay Cleaning", date: "February 28, 2026", status: "completed" },
-  { id: "4", service: "Ceramic Coating", date: "March 5, 2026", status: "issue" },
-];
+import { db } from '../../firebaseConfig';
+import LoadingScreen from '../LoadingScreen';
+import ErrorScreen from '../ErrorScreen';
 
 export default function CustomerDashboardScreen() {
     const [name, setName] = useState(null);
+    const [userUid, setUserUid] = useState(null);
+    const [requests, setRequests] = useState(null);
     const [isLoading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState(null);
     const navigation = useNavigation();
 
-     const renderItem = ({ item }) => (
+    const renderItem = ({ item }) => (
     <View style={styles.card}>
         <View style={styles.left}>
             <Text style={styles.service}>{item.service}</Text>
@@ -32,39 +31,69 @@ export default function CustomerDashboardScreen() {
             {item.status.toUpperCase()}
             </Text>
         </View>
-        </View>
+    </View>
     );
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-            setName(user.displayName);
-        } else {
-            setName(null);
-        }
-        setLoading(false);
-        });
+    const getUserRequests = async (userId) => {
+        const q = query(
+            collection(db, "requests"),
+            where("userId", "==", userId)
+        );
 
-        return unsubscribe;
+        const snapshot = await getDocs(q);
+
+        const requests = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return requests;
+    };
+
+    useEffect(() => {
+        (async () => {
+            // get the user ID from async storage, showing an error if not found
+            try {
+                const name = await AsyncStorage.getItem("userName");
+                if (name) setName(name);
+
+                const uid = await AsyncStorage.getItem('userUid');
+                setUserUid(uid);
+                if (uid == null) { // user ID should not be null on this screen, so if is show error
+                    setErrorMessage('You must be signed in to view this screen');
+                }
+
+                (async () => {
+                    const data = await getUserRequests(uid);
+                    setRequests(data);
+                })();
+            } catch (e) {
+                console.error(e);
+                setErrorMessage('Something went wrong');
+            }
+        })();
+        setLoading(false);
     }, []);
 
+    // if loading, show loading icon
     if (isLoading) {
-        return (
-        <SafeAreaView style={styles.container}>
-            <Text>Loading...</Text>
-        </SafeAreaView>
-        );
+        return <LoadingScreen />;
+    }
+
+    // if error found, show message on screen
+    if (errorMessage != null) {
+        return <ErrorScreen errorMessage={errorMessage} />;
     }
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.h1}>
-                Welcome, {name ? name : "fakeUser"}
+                Welcome, {name ? name : "Unknown User"}
             </Text>
             <Text style={styles.h2}>My Requests</Text>
             <View style={styles.container}>
                 <FlatList
-                    data={fakeData}
+                    data={requests}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     contentContainerStyle={{ paddingVertical: 20 }}
@@ -82,8 +111,8 @@ export default function CustomerDashboardScreen() {
 }
 
 const statusColors = {
-  pending: { color: "#915700" },    // orange
-  upcoming: { color: "#000000" },   // blue
-  completed: { color: "#0f9713" },  // green
+  pending: { color: "#915700" },
+  upcoming: { color: "#000000" },
+  completed: { color: "#0f9713" },
   issue: { color: "#bd0d00" },
 };
