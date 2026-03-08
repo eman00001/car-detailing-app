@@ -6,13 +6,14 @@ import styles from '../../stylesheet';
 import { getFirebaseAuthErrorMessage } from '../../firebaseUtils';
 import { firebase_auth } from '../../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useNavigation } from '@react-navigation/native';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loginError, setLoginError] = useState('');
-
+    const navigation = useNavigation();
     const handleSignIn = async () => {
         setLoginError(''); // reset error message
         setLoading(true); // begin loading
