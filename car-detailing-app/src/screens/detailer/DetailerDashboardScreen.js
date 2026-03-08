@@ -77,7 +77,7 @@ export default function DetailerDashboardScreen() {
             ...doc.data()
         }));
 
-        return [...requests, { id: "2", service: "Exterior Wash & Wax", date: "March 18, 2026", status: "upcoming" }];
+        return requests;
     };
 
     useEffect(() => {
