@@ -81,7 +81,7 @@ export default function DetailerDashboardScreen() {
     };
 
     useEffect(() => {
-        const getLocation = async () => {
+        (async () => {
             const { status } = await Location.requestForegroundPermissionsAsync();
 
             if (status !== "granted") {
@@ -91,10 +91,7 @@ export default function DetailerDashboardScreen() {
 
             const currentLocation = await Location.getCurrentPositionAsync({});
             setLocation(currentLocation.coords);
-        };
 
-        getLocation();
-        (async () => {
             // get the user ID from async storage, showing an error if not found
             try {
                 const name = await AsyncStorage.getItem("userName");
@@ -107,7 +104,7 @@ export default function DetailerDashboardScreen() {
                 }
 
                 (async () => {
-                    const data = await getAllRequests();
+                    const data = await getAllRequests(uid);
                     setRequests(data);
                 })();
             } catch (e) {
@@ -175,27 +172,38 @@ export default function DetailerDashboardScreen() {
             </Pressable> */}
             <Text style={styles.h2}>Map</Text>
             <View style={styles.container}>
-                <MapView
-                    style={styles.map}
-                    initialRegion={{
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                    latitudeDelta: 0.05,
-                    longitudeDelta: 0.05
-                    }}
-                >
-                    {markers.map((marker) => (
-                    <Marker
-                        key={marker.id}
-                        coordinate={{
-                        latitude: marker.lat,
-                        longitude: marker.lng
+                {location ? (
+                    <MapView
+                        style={styles.map}
+                        initialRegion={{
+                            latitude: location.latitude,
+                            longitude: location.longitude,
+                            latitudeDelta: 0.05,
+                            longitudeDelta: 0.05
                         }}
-                        title={marker.title}
-                    />
-                    ))}
-                </MapView>
+                        >
+                        {markers.map((marker) => (
+                            <Marker
+                            key={marker.id}
+                            coordinate={{
+                                latitude: marker.lat,
+                                longitude: marker.lng
+                            }}
+                            title={marker.title}
+                            />
+                        ))}
+                    </MapView>
+                ) : (
+                    <Text>Getting location...</Text>
+                )}
             </View>
         </SafeAreaView>
     );
 }
+
+const statusColors = {
+  pending: { color: "#915700" },    // orange
+  upcoming: { color: "#000000" },   // blue
+  completed: { color: "#0f9713" },  // green
+  issue: { color: "#bd0d00" },
+};
