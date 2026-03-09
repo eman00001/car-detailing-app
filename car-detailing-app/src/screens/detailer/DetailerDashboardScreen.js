@@ -39,7 +39,7 @@ export default function DetailerDashboardScreen() {
         </View>
 
         <View style={styles.right}>
-            { item.status == 'pending' ?  <Text style={styles.button}>Accept</Text>: null}
+            { item.status == 'pending' ?  <Pressable style={styles.button}><Text>Accept</Text></Pressable>: null}
             { item.status == 'upcoming' ?  <Text style={[styles.status, statusColors[item.status]]}>{item.status.toUpperCase()}</Text>: null}
         </View>
     </View>
@@ -61,12 +61,12 @@ export default function DetailerDashboardScreen() {
         return jobs;
     };
 
-    const getAllRequests = async (userId) => {
+    const getAllRequests = async () => {
         const q = query(
             collection(db, "requests"),
             or(
                 where("status", "==", "pending"),
-                where("detailerId", "==", userId)
+                where("detailerId", "==", userUid)
             )
         );
 
@@ -104,15 +104,15 @@ export default function DetailerDashboardScreen() {
                 }
 
                 (async () => {
-                    const data = await getAllRequests(uid);
+                    const data = await getAllRequests();
                     setRequests(data);
                 })();
             } catch (e) {
                 console.error(e);
                 setErrorMessage('Something went wrong');
             }
+            setLoading(false);
         })();
-        setLoading(false);
     }, []);
 
     // if loading, show loading icon
