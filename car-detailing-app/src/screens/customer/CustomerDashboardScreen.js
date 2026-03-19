@@ -1,59 +1,89 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, Pressable, FlatList } from "react-native";
-import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { firebase_auth, db } from "../../firebaseConfig";
-import styles from "../../stylesheet";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, FlatList, Pressable } from 'react-native';
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
-export default function CustomerDashboardScreen({ navigation }) {
-  const user = firebase_auth.currentUser;
-  const [requests, setRequests] = useState([]);
+import styles from '../../stylesheet';
 
-  useEffect(() => {
-    if (!user) return;
+const auth = getAuth();
+const fakeData = [
+  { id: "1", service: "Full Interior Detail", date: "March 10, 2026", status: "pending" },
+  { id: "2", service: "Exterior Wash & Wax", date: "March 18, 2026", status: "upcoming" },
+  { id: "3", service: "Engine Bay Cleaning", date: "February 28, 2026", status: "completed" },
+  { id: "4", service: "Ceramic Coating", date: "March 5, 2026", status: "issue" },
+];
 
-    const q = query(
-      collection(db, "requests"),
-      where("customerUid", "==", user.uid),
-      orderBy("createdAt", "desc")
+export default function CustomerDashboardScreen() {
+    const [name, setName] = useState(null);
+    const [isLoading, setLoading] = useState(true);
+    const navigation = useNavigation();
+
+     const renderItem = ({ item }) => (
+    <View style={styles.card}>
+        <View style={styles.left}>
+            <Text style={styles.service}>{item.service}</Text>
+            <Text style={styles.vehicle}>{item.vehicle}</Text>
+            <Text style={styles.date}>{item.date}</Text>
+        </View>
+
+        <View style={styles.right}>
+            <Text style={[styles.status, statusColors[item.status]]}>
+            {item.status.toUpperCase()}
+            </Text>
+        </View>
+        </View>
     );
 
-    const unsub = onSnapshot(q, (snap) => {
-      setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            setName(user.displayName);
+        } else {
+            setName(null);
+        }
+        setLoading(false);
+        });
 
-    return () => unsub();
-  }, [user?.uid]);
+        return unsubscribe;
+    }, []);
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ padding: 16, gap: 12, flex: 1 }}>
-        <Text style={{ fontSize: 22, fontWeight: "700" }}>Customer Dashboard</Text>
+    if (isLoading) {
+        return (
+        <SafeAreaView style={styles.container}>
+            <Text>Loading...</Text>
+        </SafeAreaView>
+        );
+    }
 
-        <Pressable
-          onPress={() => navigation.navigate("Create Request")}
-          style={{ ...styles.button, ...styles.buttonPlain }}
-        >
-          <Text style={styles.buttonText}>Create New Request</Text>
-        </Pressable>
-
-        <Text style={{ fontSize: 18, fontWeight: "700" }}>My Requests</Text>
-
-        <FlatList
-          data={requests}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={{ borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <Text style={{ fontSize: 18, fontWeight: "700" }}>{item.serviceType}</Text>
-              <Text numberOfLines={2}>{item.description}</Text>
-              <Text>Location: {item.locationText}</Text>
-              <Text>Time: {item.preferredTime}</Text>
-              <Text style={{ fontWeight: "700" }}>Status: {item.status}</Text>
+    return (
+        <SafeAreaView style={styles.container}>
+            <Text style={styles.h1}>
+                Welcome, {name ? name : "fakeUser"}
+            </Text>
+            <Text style={styles.h2}>My Requests</Text>
+            <View style={styles.container}>
+                <FlatList
+                    data={fakeData}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderItem}
+                    contentContainerStyle={{ paddingVertical: 20 }}
+                    showsVerticalScrollIndicator={false}
+                />
             </View>
-          )}
-          ListEmptyComponent={<Text>No requests yet.</Text>}
-        />
-      </View>
-    </SafeAreaView>
-  );
+            <Pressable
+                style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
+                onPress={() => navigation.navigate("CustomerCreateRequestScreen")}
+                >
+                <Text style={styles.buttonText}>Create New Request</Text>
+            </Pressable>
+        </SafeAreaView>
+    );
 }
+
+const statusColors = {
+  pending: { color: "#915700" },    // orange
+  upcoming: { color: "#000000" },   // blue
+  completed: { color: "#0f9713" },  // green
+  issue: { color: "#bd0d00" },
+};
