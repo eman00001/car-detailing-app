@@ -1,11 +1,13 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, TextInput, Pressable, Alert } from "react-native";
 import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { firebase_auth, db } from "../../firebaseConfig";
 import styles from "../../stylesheet";
 
-export default function CustomerCreateRequestScreen({ navigation }) {
+export default function CustomerCreateRequestScreen() {
+  const navigation = useNavigation();
   const user = firebase_auth.currentUser;
 
   const [serviceType, setServiceType] = useState("");
@@ -36,7 +38,7 @@ export default function CustomerCreateRequestScreen({ navigation }) {
       });
 
       Alert.alert("Posted", "Your request is now visible to detailers.");
-      navigation.navigate("Customer Dashboard");
+      navigation.popToTop(); // go to first page (dashboard page)
     } catch (e) {
       console.warn(e);
       Alert.alert("Error", "Could not submit request.");

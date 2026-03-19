@@ -1,30 +1,26 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, FlatList, Pressable } from 'react-native';
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../stylesheet';
 
-const auth = getAuth();
-const fakeData = [
-  { id: "1", service: "Full Interior Detail", date: "March 10, 2026", status: "pending" },
-  { id: "2", service: "Exterior Wash & Wax", date: "March 18, 2026", status: "upcoming" },
-  { id: "3", service: "Engine Bay Cleaning", date: "February 28, 2026", status: "completed" },
-  { id: "4", service: "Ceramic Coating", date: "March 5, 2026", status: "issue" },
-];
+import { db } from '../../firebaseConfig';
+import { query, collection, where, orderBy, onSnapshot } from 'firebase/firestore';
 
 export default function CustomerDashboardScreen() {
+    const [userUid, setUserUid] = useState(null);
     const [name, setName] = useState(null);
+    const [requests, setRequests] = useState([]);
     const [isLoading, setLoading] = useState(true);
     const navigation = useNavigation();
 
      const renderItem = ({ item }) => (
     <View style={styles.card}>
         <View style={styles.left}>
-            <Text style={styles.service}>{item.service}</Text>
-            <Text style={styles.vehicle}>{item.vehicle}</Text>
-            <Text style={styles.date}>{item.date}</Text>
+            <Text style={styles.service}>{item.serviceType}</Text>
+            <Text style={styles.vehicle}>Vehicle</Text>
+            <Text style={styles.date}>{item.preferredTime}</Text>
         </View>
 
         <View style={styles.right}>
@@ -35,18 +31,43 @@ export default function CustomerDashboardScreen() {
         </View>
     );
 
+    // get the user's UID and name from async storage
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-            setName(user.displayName);
-        } else {
-            setName(null);
-        }
-        setLoading(false);
+        (async () => {
+            // get the user ID from async storage, showing an error if not found
+            try {
+                const userUid = await AsyncStorage.getItem('userUid');
+                const name = await AsyncStorage.getItem('userName');
+                setUserUid(userUid);
+                setName(name);
+                if (userUid == null) { // user ID should not be null on this screen, so if is show error
+                    setErrorMessage('You must be signed in to view this screen');
+                }
+            } catch (e) {
+                console.error(e);
+                setErrorMessage('Something went wrong');
+            }
+        })();
+    }, []);
+
+    // get requests from database
+    useEffect(() => {
+        if (!userUid) return;
+
+        const q = query(
+            collection(db, "requests"),
+            where("customerUid", "==", userUid),
+            orderBy("createdAt", "desc")
+        );
+
+        const unsubscribe = onSnapshot(q, (snap) => {
+            const requests = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            setRequests(requests);
+            setLoading(false);
         });
 
         return unsubscribe;
-    }, []);
+    }, [userUid]);
 
     if (isLoading) {
         return (
@@ -64,7 +85,7 @@ export default function CustomerDashboardScreen() {
             <Text style={styles.h2}>My Requests</Text>
             <View style={styles.container}>
                 <FlatList
-                    data={fakeData}
+                    data={requests}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     contentContainerStyle={{ paddingVertical: 20 }}
@@ -73,7 +94,7 @@ export default function CustomerDashboardScreen() {
             </View>
             <Pressable
                 style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
-                onPress={() => navigation.navigate("CustomerCreateRequestScreen")}
+                onPress={() => navigation.navigate('CreateRequest')}
                 >
                 <Text style={styles.buttonText}>Create New Request</Text>
             </Pressable>
@@ -82,8 +103,9 @@ export default function CustomerDashboardScreen() {
 }
 
 const statusColors = {
+  open: { color: "#770" },
   pending: { color: "#915700" },    // orange
-  upcoming: { color: "#000000" },   // blue
+  accepted: { color: "#088" },   // blue
   completed: { color: "#0f9713" },  // green
   issue: { color: "#bd0d00" },
 };

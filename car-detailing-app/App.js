@@ -100,8 +100,6 @@ export default function App() {
             },
         })
 
-        
-
         if (isDetailer) {
             const TabNavigator = createBottomTabNavigator({
                 initialRouteName: 'DetailerDashboard',
@@ -170,7 +168,25 @@ export default function App() {
                     },
                 },
             });
-            Navigation = createStaticNavigation(TabNavigator);
+            const CreateRequestStack = createNativeStackNavigator({
+                initialRouteName: 'Home',
+                screens: {
+                    Home: {
+                        screen: TabNavigator,
+                        options: {
+                            title: 'Home',
+                            headerShown: false,
+                        },
+                    },
+                    CreateRequest: {
+                        screen: CustomerCreateRequestScreen,
+                        options: {
+                            title: 'Create Request',
+                        },
+                    },
+                }
+            })
+            Navigation = createStaticNavigation(CreateRequestStack);
         }
 
     } else {
