@@ -13,6 +13,7 @@ import LogOutScreen from './src/screens/auth/LogOutScreen';
 import DetailerDashboardScreen from './src/screens/detailer/DetailerDashboardScreen';
 import DetailerJobsScreen from './src/screens/detailer/DetailerJobsScreen';
 import CustomerDashboardScreen from './src/screens/customer/CustomerDashboardScreen';
+import CustomerCreateRequestScreen from './src/screens/customer/CustomerCreateRequestScreen';
 import ChatScreen from './src/screens/chat/ChatScreen';
 
 export default function App() {

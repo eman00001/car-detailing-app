@@ -1,7 +1,7 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, TextInput, Pressable, Alert } from "react-native";
 import { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { firebase_auth, db } from "../../firebaseConfig";
 import styles from "../../stylesheet";
 
@@ -32,11 +32,11 @@ export default function CustomerCreateRequestScreen({ navigation }) {
         status: "open",
         acceptedByUid: null,
         acceptedByName: null,
-        createdAt: serverTimestamp(),
+        createdAt: Timestamp.now(),
       });
 
       Alert.alert("Posted", "Your request is now visible to detailers.");
-      navigation.goBack();
+      navigation.navigate("Customer Dashboard");
     } catch (e) {
       console.warn(e);
       Alert.alert("Error", "Could not submit request.");
