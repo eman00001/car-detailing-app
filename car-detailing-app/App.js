@@ -22,6 +22,7 @@ import ErrorScreen from './src/screens/ErrorScreen';
 import LoadingScreen from './src/screens/LoadingScreen';
 import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScreen';
 import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
+import CustomerRequestConfirmScreen from './src/screens/customer/CustomerRequestConfirmScreen';
 
 export default function App() {
     const [loading, setLoading] = useState(true);
@@ -191,8 +192,14 @@ export default function App() {
                             title: 'Car Details',
                         },
                     },
-                }
-            })
+                    ConfirmRequest: {
+                        screen: CustomerRequestConfirmScreen,
+                        options: {
+                            title: 'Confirm Request',
+                        },
+                    },
+                },
+            });
             Navigation = createStaticNavigation(CreateRequestStack);
         }
 

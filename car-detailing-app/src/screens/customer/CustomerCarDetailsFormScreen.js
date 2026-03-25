@@ -213,8 +213,8 @@ export default function CarDetailsFormScreen({ route }) {
 
     // handles getting the request from the database
     useEffect(() => {
+        if (route.params?.requestId == null) return; // if request not passed in navigation, cannot continue
         const { requestId } = route.params;
-        if (requestId == null) return; // if request not passed in navigation, cannot continue
         const requestDoc = doc(db, 'requests', requestId);
         // listen for changes
         const unsubscribe = onSnapshot(requestDoc, async (requestDocSnapshot) => {
@@ -365,11 +365,13 @@ export default function CarDetailsFormScreen({ route }) {
             carMake: selectedCarMake?.name,
             carModel: selectedCarModel?.name,
             carTrim: selectedCarTrim?.description,
-            carExteriorColor: selectedCarExteriorColor,
-            carInteriorColor: selectedCarInteriorColor,
+            carExteriorColor: selectedCarExteriorColor?.name,
+            carExteriorColorRgb: selectedCarExteriorColor?.rgb,
+            carInteriorColor: selectedCarInteriorColor?.name,
+            carInteriorColorRgb: selectedCarInteriorColor?.rgb,
             estimatedCost,
         });
-        navigation.popToTop(); // go to dashboard
+        navigation.navigate('ConfirmRequest', { requestId: request.id }); // last step, so confirm request
     }
 
     // when dropdown with given ID opened, close other dropdowns
