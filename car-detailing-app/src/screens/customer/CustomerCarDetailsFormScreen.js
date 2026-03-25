@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { View, ScrollView, Text, ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import ErrorScreen from '../ErrorScreen';
+
+import { db } from '../../firebaseConfig';
+import { doc, collection, query, updateDoc, onSnapshot, where } from 'firebase/firestore';
+
+import styles from '../../stylesheet';
+import LoadingScreen from '../LoadingScreen';
 
 const CAR_API_BASE_URL = 'https://carapi.app';
 const CAR_API_MAKES_URL = '/api/makes/v2';
@@ -34,7 +42,7 @@ const estimateSurfaceAreaOfCar_In2 = (car) => {
 }
 
 // function calculates the estimated of doing a given detailing to a given car
-const calculateEstimatedCost = (car, detailingType) => {
+const calculateEstimatedCost = (detailingType, car) => {
     const estimatedSurfaceArea = estimateSurfaceAreaOfCar_In2(car);
     const numberOfSeats = car.seats ?? CAR_SEATS_AVG;
     const numberOfDoors = car.doors ?? CAR_DOORS_AVG;
@@ -51,37 +59,17 @@ const formatterCAD = Intl.NumberFormat('en-us', {
     currency: 'CAD',
 });
 
-// the types of detailing that is offered, along with the costs associated with each
-const detailingTypes = [
-    {
-        id: 1,
-        name: 'Basic Exterior',
-        description:
-            'Power wash the exterior with your car, applying shine afterwards to give a sharp finish',
-        baseCost: 50,
-        additionalCostPerSquareInch: 0.001,
-    },
-    {
-        id: 2,
-        name: 'Basic Exterior + Interior',
-        description:
-            'Power wash and shine to exterior, ' +
-            'as well as a thorough cleaning and refurbishing of the inside of your car',
-        baseCost: 75,
-        additionalCostPerSquareInch: 0.001,
-        additionalCostPerSeat: 10,
-    },
-    {
-        id: 3,
-        name: 'Window Deep Clean',
-        description:
-            'Clean all the windows on your car to crystal clear perfection',
-        baseCost: 25,
-        additionalCostPerDoor: 5,
-    }
-];
+export default function CarDetailsFormScreen({ route }) {
+    const navigation = useNavigation();
 
-export default function CarDetailsFormScreen() {
+    // load until finish fetching data
+    const [loading, setLoading] = useState(true);
+
+    // stores the request that was created in the previous step of the customer request
+    const [request, setRequest] = useState(null);
+    // stores the detailing type of the selected request
+    const [detailingType, setDetailingType] = useState(null);
+
     // store fetched car makes and user selections
     const [carMakes, setCarMakes] = useState({ ...EMPTY_CAR_DETAILS });
     const [carMakesDropdownOpen, setCarMakesDropdownOpen] = useState(false);
@@ -105,10 +93,6 @@ export default function CarDetailsFormScreen() {
 
     // store user selections of car interior color
     const [selectedCarInteriorColor, setSelectedCarInteriorColor] = useState(null);
-
-    // store user selections of detailing type
-    const [detailingTypesDropdownOpen, setDetailingTypesDropdownOpen] = useState(false);
-    const [selectedDetailingType, setSelectedDetailingType] = useState(null);
 
     // function takes a car detail ID and finds it in the detail's data list
     const setSelectedDataFromId = (data, setSelected) => async (id) => {
@@ -213,21 +197,9 @@ export default function CarDetailsFormScreen() {
         selected: selectedCarInteriorColor,
         setSelected: setSelectedCarInteriorColor,
     };
-    const detailingTypesData = {
-        id: 6,
-        schema: {
-            label: 'name',
-            value: 'id',
-        },
-        data: detailingTypes,
-        isDropdownOpen: detailingTypesDropdownOpen,
-        setIsDropdownOpen: setDetailingTypesDropdownOpen,
-        selected: selectedDetailingType,
-        setSelected: setSelectedDataFromId(detailingTypes, setSelectedDetailingType),
-    };
 
     // holds all dropdowns on the form, in order to ensure only one open at a time
-    const carFormDropdowns = [carMakesData, carModelsData, carTrimsData, detailingTypesData];
+    const carFormDropdowns = [carMakesData, carModelsData, carTrimsData];
     
     // set hierarchal relationships between values
     carMakesData.dependentData = [carModelsData, carTrimsData, carExteriorColorsData, carInteriorColorsData];
@@ -235,9 +207,55 @@ export default function CarDetailsFormScreen() {
     carTrimsData.dependentData = [carExteriorColorsData, carInteriorColorsData];
 
     // calculate the estimated cost, if there is enough user input to do so
-    const estimatedCost = (selectedCarTrim != null && selectedDetailingType != null)
-        ? calculateEstimatedCost(selectedCarTrim.bodies?.[0] ?? { }, selectedDetailingType)
+    const estimatedCost = (detailingType != null && selectedCarTrim != null)
+        ? calculateEstimatedCost(detailingType, selectedCarTrim.bodies?.[0] ?? { })
         : null;
+
+    // handles getting the request from the database
+    useEffect(() => {
+        const { requestId } = route.params;
+        if (requestId == null) return; // if request not passed in navigation, cannot continue
+        const requestDoc = doc(db, 'requests', requestId);
+        // listen for changes
+        const unsubscribe = onSnapshot(requestDoc, async (requestDocSnapshot) => {
+            // store request in state, or null if doesn't exist
+            if (requestDocSnapshot.exists()) {
+                const request = { ...requestDocSnapshot.data(), id: requestDocSnapshot.id };
+                setRequest(request);
+            } else {
+                setRequest(null);
+            }
+        });
+        return unsubscribe;
+    }, []);
+
+    // handles getting the details of the selected detailing type
+    useEffect(() => {
+        setLoading(true); // begin loading
+
+        // if no request, reset detailing type
+        if (request == null) {
+            setDetailingType(null);
+            return;
+        }
+
+        const detailingTypeQuery = query(
+            collection(db, 'detailingTypes'),
+            where('name', '==', request.serviceType)
+        );
+        const unsubscribe = onSnapshot(detailingTypeQuery, (detailingTypeSnapshot) => {
+            // set the detailing type to the data, if exists
+            if (detailingTypeSnapshot.docs.length > 0) {
+                const detailingTypeData = detailingTypeSnapshot.docs[0];
+                const detailingType = { ...detailingTypeData.data(), id: detailingTypeData.id };
+                setDetailingType(detailingType);
+                setLoading(false); // finish loading
+            } else {
+                setDetailingType(null);
+            }
+        });
+        return unsubscribe;
+    }, [request]);
 
     // function gets the first page from CarAPI using the given URL, storing the data to the given state setter
     const getFirstPageFromCarAPIAsync = async (urlPath, searchParams, setCarDetails, selectedCarDetail) => {
@@ -341,6 +359,19 @@ export default function CarDetailsFormScreen() {
         getFirstPageFromCarAPIAsync(CAR_API_TRIMS_URL, searchParams, setCarTrims, selectedCarTrim);
     }, [selectedCarMake, selectedCarModel, carTrimsSearch]);
 
+    const submit = async () => {
+        const requestDoc = doc(db, 'requests', request.id);
+        await updateDoc(requestDoc, {
+            carMake: selectedCarMake?.name,
+            carModel: selectedCarModel?.name,
+            carTrim: selectedCarTrim?.description,
+            carExteriorColor: selectedCarExteriorColor,
+            carInteriorColor: selectedCarInteriorColor,
+            estimatedCost,
+        });
+        navigation.popToTop(); // go to dashboard
+    }
+
     // when dropdown with given ID opened, close other dropdowns
     const handleOpenDropdown = (id) => () => {
         // close all other dropdowns that is not this dropdown
@@ -350,34 +381,6 @@ export default function CarDetailsFormScreen() {
             }
         }
     }
-
-    // render the detailing type dropdown
-    const renderDetailingTypeDropdownPicker = (detailingTypesData, label) => {
-        return (
-            <View>
-                <Text style={carDetailsFormStyles.label}>
-                    {label}
-                </Text>
-                {detailingTypesData.selected != null && (
-                    <Text>
-                        {detailingTypesData.selected?.description}
-                    </Text>
-                )}
-                <DropDownPicker
-                    schema={detailingTypesData.schema}
-                    listMode="SCROLLVIEW"
-                    open={detailingTypesData.isDropdownOpen}
-                    items={detailingTypesData.data}
-                    value={detailingTypesData.selected?.id}
-                    placeholder="None selected"
-                    setOpen={detailingTypesData.setIsDropdownOpen}
-                    setValue={detailingTypesData.setSelected}
-                    onOpen={handleOpenDropdown(detailingTypesData.id)}
-                    zIndex={10000}
-                />
-            </View>
-        );
-    };
 
     // render the car details dropdown, which contains search functionality and lazy loading
     const renderCarDetailsDropdownPicker = (carDetailsData, label) => {
@@ -414,7 +417,7 @@ export default function CarDetailsFormScreen() {
 
         return (
             <View>
-                <Text style={carDetailsFormStyles.label}>
+                <Text style={styles.inputLabel}>
                     {label}
                 </Text>
                 <DropDownPicker
@@ -457,7 +460,7 @@ export default function CarDetailsFormScreen() {
         
         return (
             <View>
-                <Text style={carDetailsFormStyles.label}>
+                <Text style={styles.inputLabel}>
                     {label}
                 </Text>
                 <Text>
@@ -488,7 +491,7 @@ export default function CarDetailsFormScreen() {
     const renderFieldText = (text, label) => {
         return (
             <View>
-                <Text style={carDetailsFormStyles.label}>
+                <Text style={styles.inputLabel}>
                     {label}
                 </Text>
                 <Text>{text}</Text>
@@ -496,10 +499,24 @@ export default function CarDetailsFormScreen() {
         );
     };
 
+    // show loading screen until finished fetching
+    if (loading) {
+        return <LoadingScreen />
+    }
+
+    // if no request passed in, cannot save selection so return error screen
+    if (request == null) {
+        return <ErrorScreen errorMessage="Unknown Request" />
+    }
+
     return (
         <SafeAreaProvider>
             <SafeAreaView style={carDetailsFormStyles.container}>
                 <ScrollView contentContainerStyle={carDetailsFormStyles.carFormContainer}>
+                    <View>
+                        <Text style={styles.inputLabel}>Selected Service Type</Text>
+                        <Text>{request.serviceType}</Text>
+                    </View>
                     <View style={carDetailsFormStyles.notice}>
                         <Text style={carDetailsFormStyles.noticeIcon}>i</Text>
                         <Text style={carDetailsFormStyles.noticeText}>
@@ -512,7 +529,6 @@ export default function CarDetailsFormScreen() {
                             one on one to negotiate prices.
                         </Text>
                     </View>
-                    {renderDetailingTypeDropdownPicker(detailingTypesData, 'Detailing Type')}
                     {renderCarDetailsDropdownPicker(carMakesData, 'Car Make')}
                     {selectedCarMake != null &&
                         renderCarDetailsDropdownPicker(carModelsData, 'Car Model')}
@@ -524,6 +540,10 @@ export default function CarDetailsFormScreen() {
                         renderCarColorPalettePicker(carInteriorColorsData, 'Interior Color')}
                     {estimatedCost != null &&
                         renderFieldText(formatterCAD.format(estimatedCost), 'Estimated Cost')}
+
+                    <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </Pressable>
                 </ScrollView>
             </SafeAreaView>
         </SafeAreaProvider>
@@ -539,11 +559,6 @@ const carDetailsFormStyles = StyleSheet.create({
         margin: 20,
         gap: 20,
         paddingBottom: 20,
-    },
-    label: {
-        fontSize: 15,
-        fontWeight: 700,
-        marginBottom: 5,
     },
     notice: {
         backgroundColor: '#DDE',

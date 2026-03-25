@@ -21,6 +21,7 @@ import ChatMessagesScreen from './src/screens/chat/ChatMessagesScreen';
 import ErrorScreen from './src/screens/ErrorScreen';
 import LoadingScreen from './src/screens/LoadingScreen';
 import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScreen';
+import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
 
 export default function App() {
     const [loading, setLoading] = useState(true);
@@ -182,6 +183,12 @@ export default function App() {
                         screen: CustomerCreateRequestScreen,
                         options: {
                             title: 'Create Request',
+                        },
+                    },
+                    CarDetailsForm: {
+                        screen: CarDetailsFormScreen,
+                        options: {
+                            title: 'Car Details',
                         },
                     },
                 }
