@@ -5,15 +5,22 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { useNavigation } from "@react-navigation/native";
 import { useHeaderHeight } from '@react-navigation/elements';
 import { addDoc, collection, Timestamp, query, orderBy, onSnapshot } from "firebase/firestore";
-import { firebase_auth, db } from "../../firebaseConfig";
+import { db } from "../../firebaseConfig";
 import LoadingScreen from "../LoadingScreen";
 import styles from "../../stylesheet";
+import ErrorScreen from "../ErrorScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function CustomerCreateRequestScreen() {
     const navigation = useNavigation();
-    const user = firebase_auth.currentUser;
-
     const navigationHeaderHeight = useHeaderHeight();
+    
+    // stores the message of any errors that occur on the screen
+    const [errorMessage, setErrorMessage] = useState(null);
+
+    // stores the user's ID from AsyncStorage
+    const [userUid, setUserUid] = useState(null);
+    const [userName, setUserName] = useState(null);
 
     // holds the detailing types stored in the database
     const [detailingTypes, setDetailingTypes] = useState(null);
@@ -24,6 +31,24 @@ export default function CustomerCreateRequestScreen() {
     const [description, setDescription] = useState("");
     const [locationText, setLocationText] = useState("");
     const [preferredTime, setPreferredTime] = useState("");
+
+    // get user ID from async storage
+    useEffect(() => {
+        (async () => {
+            try {
+                const userUid = await AsyncStorage.getItem('userUid');
+                const userName = await AsyncStorage.getItem('userName');
+                setUserUid(userUid);
+                setUserName(userName);
+                if (userUid == null) { // user ID should not be null on this screen, so if is show error message
+                    setErrorMessage('You must be signed in to view this screen');
+                }
+            } catch (e) {
+                console.error(e);
+                setErrorMessage('Something went wrong');
+            }
+        })();
+    }, []);
 
     // fetch the detailings types from the database
     useEffect(() => {
@@ -39,7 +64,7 @@ export default function CustomerCreateRequestScreen() {
     }, []);
 
     const submit = async () => {
-        if (!user) return;
+        if (!userUid) return;
 
         if (!serviceType.trim() || !description.trim() || !locationText.trim() || !preferredTime.trim()) {
             Alert.alert("Missing info", "Please fill in all fields.");
@@ -48,8 +73,8 @@ export default function CustomerCreateRequestScreen() {
 
         try {
             const docRef = await addDoc(collection(db, "requests"), {
-                customerUid: user.uid,
-                customerName: user.displayName ?? "Customer",
+                customerUid: userUid,
+                customerName: userName ?? "Customer",
                 serviceType: serviceType.trim(),
                 description: description.trim(),
                 locationText: locationText.trim(),
@@ -89,7 +114,13 @@ export default function CustomerCreateRequestScreen() {
         );
     };
 
-    if (detailingTypes == null) {
+    // show any errors if present
+    if (errorMessage != null) {
+        return <ErrorScreen errorMessage={errorMessage} />
+    }
+
+    // if any external data is still being fetched, load
+    if (userUid == null || detailingTypes == null) {
         return <LoadingScreen />
     }
 
