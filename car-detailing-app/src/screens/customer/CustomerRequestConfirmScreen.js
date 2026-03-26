@@ -10,6 +10,7 @@ import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
 
 import styles from '../../stylesheet';
+import { formatterCAD } from '../../utils';
 
 export default function CustomerRequestConfirmScreen({ route }) {
     const navigation = useNavigation();
@@ -84,6 +85,7 @@ export default function CustomerRequestConfirmScreen({ route }) {
                 {renderRequestData('Car Trim', request.carTrim)}
                 {renderRequestData('Car Exterior Color', request.carExteriorColor)}
                 {renderRequestData('Car Interior Color', request.carInteriorColor)}
+                {renderRequestData('Estimated Cost', formatterCAD.format(request.estimatedCost))}
 
                 <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
                     <Text style={styles.buttonText}>Submit</Text>

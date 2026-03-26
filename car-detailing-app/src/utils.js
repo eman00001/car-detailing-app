@@ -79,3 +79,9 @@ export function formatDateTime(dateTime) {
     // return the day and time concatenated
     return `${dayString}, ${timeString}`;
 }
+
+// function converts a number to CAD format
+export const formatterCAD = Intl.NumberFormat('en-us', {
+    style: 'currency',
+    currency: 'CAD',
+});

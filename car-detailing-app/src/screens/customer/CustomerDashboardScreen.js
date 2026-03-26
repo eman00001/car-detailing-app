@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../stylesheet';
 
 import { db } from '../../firebaseConfig';
-import { query, collection, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { query, doc, collection, where, orderBy, onSnapshot } from 'firebase/firestore';
 
 export default function CustomerDashboardScreen() {
     const [userUid, setUserUid] = useState(null);
@@ -69,6 +69,15 @@ export default function CustomerDashboardScreen() {
         return unsubscribe;
     }, [userUid]);
 
+    // function handles beginning to create a new request
+    const handleCreateRequest = () => {
+        // create empty document in order to generate ID
+        const requestDoc = doc(collection(db, 'requests'));
+        const requestId = requestDoc.id;
+        // pass generated ID to request form screen
+        navigation.navigate('CreateRequest', { requestId });
+    }
+
     if (isLoading) {
         return (
         <SafeAreaView style={styles.container}>
@@ -94,7 +103,7 @@ export default function CustomerDashboardScreen() {
             </View>
             <Pressable
                 style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
-                onPress={() => navigation.navigate('CreateRequest')}
+                onPress={handleCreateRequest}
                 >
                 <Text style={styles.buttonText}>Create New Request</Text>
             </Pressable>

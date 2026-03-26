@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, ScrollView, Text, ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, Text, ActivityIndicator, FlatList, Pressable, StyleSheet, BackHandler } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -8,8 +8,11 @@ import ErrorScreen from '../ErrorScreen';
 import { db } from '../../firebaseConfig';
 import { doc, collection, query, updateDoc, onSnapshot, where } from 'firebase/firestore';
 
-import styles from '../../stylesheet';
 import LoadingScreen from '../LoadingScreen';
+
+import { formatterCAD } from '../../utils';
+import styles from '../../stylesheet';
+
 
 const CAR_API_BASE_URL = 'https://carapi.app';
 const CAR_API_MAKES_URL = '/api/makes/v2';
@@ -53,12 +56,6 @@ const calculateEstimatedCost = (detailingType, car) => {
     return roundToNearestMultipleOf(costRaw, DETAILING_COST_MULTIPLE);
 }
 
-// function converts a number to CAD format
-const formatterCAD = Intl.NumberFormat('en-us', {
-    style: 'currency',
-    currency: 'CAD',
-});
-
 export default function CarDetailsFormScreen({ route }) {
     const navigation = useNavigation();
 
@@ -87,6 +84,7 @@ export default function CarDetailsFormScreen({ route }) {
     const [carTrimsDropdownOpen, setCarTrimsDropdownOpen] = useState(false);
     const [carTrimsSearch, setCarTrimsSearch] = useState('');
     const [selectedCarTrim, setSelectedCarTrim] = useState(null);
+    const [selectedCarTrimDetails, setSelectedCarTrimDetails] = useState(null);
     
     // store user selections of car exterior color
     const [selectedCarExteriorColor, setSelectedCarExteriorColor] = useState(null);
@@ -94,53 +92,10 @@ export default function CarDetailsFormScreen({ route }) {
     // store user selections of car interior color
     const [selectedCarInteriorColor, setSelectedCarInteriorColor] = useState(null);
 
-    // function takes a car detail ID and finds it in the detail's data list
-    const setSelectedDataFromId = (data, setSelected) => async (id) => {
-        // if ID is callback, get value of function
-        if (typeof id === 'function') {
-            id = id();
-        }
-        // if ID is null, set remove selection
-        if (id == null) {
-            setSelected(null);
-            return;
-        }
-        // set selection to data with given ID
-        setSelected(data.find(detail => detail.id === id));
-    };
-
-    // function takes a car trim ID and fetches the trim details from CarAPI
-    const setSelectedCarTrimFromId = async (id) => {
-        // if ID is callback, get value of function
-        if (typeof id === 'function') {
-            id = id();
-        }
-        // if ID is null, set remove selection
-        if (id == null) {
-            setSelectedCarTrim(null);
-            return;
-        }
-        const url = new URL(`${CAR_API_TRIMS_URL}/${id}`, CAR_API_BASE_URL);
-        try {
-            const trimResponse = await fetch(url.toString());
-            if (trimResponse.ok) {
-                const trim = await trimResponse.json();
-                setSelectedCarTrim(trim);
-            } else {
-                console.error('Something went wrong', trimResponse);
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
     // create objects for each group of states so that easy to pass around
     const carMakesData = {
         id: 1,
-        schema: {
-            label: 'name',
-            value: 'id',
-        },
+        valueName: 'name',
         data: carMakes.data,
         next: carMakes.next,
         setDetails: setCarMakes,
@@ -149,14 +104,11 @@ export default function CarDetailsFormScreen({ route }) {
         search: carMakesSearch,
         setSearch: setCarMakesSearch,
         selected: selectedCarMake,
-        setSelected: setSelectedDataFromId(carMakes.data, setSelectedCarMake),
+        setSelected: setSelectedCarMake,
     };
     const carModelsData = {
         id: 2,
-        schema: {
-            label: 'name',
-            value: 'id',
-        },
+        valueName: 'name',
         data: carModels.data,
         next: carModels.next,
         setDetails: setCarModels,
@@ -165,14 +117,11 @@ export default function CarDetailsFormScreen({ route }) {
         search: carModelsSearch,
         setSearch: setCarModelsSearch,
         selected: selectedCarModel,
-        setSelected: setSelectedDataFromId(carModels.data, setSelectedCarModel),
+        setSelected: setSelectedCarModel,
     };
     const carTrimsData = {
         id: 3,
-        schema: {
-            label: 'description',
-            value: 'id',
-        },
+        valueName: 'description',
         data: carTrims.data,
         next: carTrims.next,
         setDetails: setCarTrims,
@@ -181,18 +130,18 @@ export default function CarDetailsFormScreen({ route }) {
         search: carTrimsSearch,
         setSearch: setCarTrimsSearch,
         selected: selectedCarTrim,
-        setSelected: setSelectedCarTrimFromId,
+        setSelected: setSelectedCarTrim,
     };
     const carExteriorColorsData = {
         id: 4,
-        data: selectedCarTrim?.exterior_colors ?? [],
+        data: selectedCarTrimDetails?.exterior_colors ?? [],
         setDetails: () => {},
         selected: selectedCarExteriorColor,
         setSelected: setSelectedCarExteriorColor,
     };
     const carInteriorColorsData = {
         id: 5,
-        data: selectedCarTrim?.interior_colors ?? [],
+        data: selectedCarTrimDetails?.interior_colors ?? [],
         setDetails: () => {},
         selected: selectedCarInteriorColor,
         setSelected: setSelectedCarInteriorColor,
@@ -207,8 +156,8 @@ export default function CarDetailsFormScreen({ route }) {
     carTrimsData.dependentData = [carExteriorColorsData, carInteriorColorsData];
 
     // calculate the estimated cost, if there is enough user input to do so
-    const estimatedCost = (detailingType != null && selectedCarTrim != null)
-        ? calculateEstimatedCost(detailingType, selectedCarTrim.bodies?.[0] ?? { })
+    const estimatedCost = (detailingType != null && selectedCarTrimDetails != null)
+        ? calculateEstimatedCost(detailingType, selectedCarTrimDetails.bodies?.[0] ?? { })
         : null;
 
     // handles getting the request from the database
@@ -222,6 +171,14 @@ export default function CarDetailsFormScreen({ route }) {
             if (requestDocSnapshot.exists()) {
                 const request = { ...requestDocSnapshot.data(), id: requestDocSnapshot.id };
                 setRequest(request);
+                // set form values based on existing values
+                if (request.carMake) setSelectedCarMake(request.carMake);
+                if (request.carModel) setSelectedCarModel(request.carModel);
+                if (request.carTrim) setSelectedCarTrim(request.carTrim);
+                if (request.carExteriorColor) setSelectedCarExteriorColor(
+                    { name: request.carExteriorColor, rgb: request.carExteriorColorRgb });
+                if (request.carInteriorColor) setSelectedCarInteriorColor(
+                    { name: request.carInteriorColor, rgb: request.carInteriorColorRgb }); 
             } else {
                 setRequest(null);
             }
@@ -258,7 +215,7 @@ export default function CarDetailsFormScreen({ route }) {
     }, [request]);
 
     // function gets the first page from CarAPI using the given URL, storing the data to the given state setter
-    const getFirstPageFromCarAPIAsync = async (urlPath, searchParams, setCarDetails, selectedCarDetail) => {
+    const getFirstPageFromCarAPIAsync = async (urlPath, searchParams, setCarDetails, selectedCarDetail, valueName) => {
         // construct URL
         const url = new URL(urlPath, CAR_API_BASE_URL);
         url.search = searchParams.toString();
@@ -269,11 +226,13 @@ export default function CarDetailsFormScreen({ route }) {
                 const carDetails = await carAPIResponse.json();
                 setCarDetails(prevDetails => {
                     // if previous details contains selected detail and current doesn't, add selected detail to start of list
-                    const prevSelectedDetail = prevDetails.data.find(detail => detail.id === selectedCarDetail?.id);
-                    const currSelectedDetail = carDetails.data.find(detail => detail.id === selectedCarDetail?.id);
+                    const prevSelectedDetail = prevDetails.data.find(detail => detail[valueName] === selectedCarDetail);
+                    const currSelectedDetail = carDetails.data.find(detail => detail[valueName] === selectedCarDetail);
                     if (prevSelectedDetail != null && currSelectedDetail == null) {
                         carDetails.data.unshift(prevSelectedDetail);
                     }
+                    carDetails.data = carDetails.data.filter(({ [valueName]: val1 }, i, arr) => // remove duplicate value names
+                        arr.findIndex(({ [valueName]: val2 }) => val2 === val1) === i);
                     return {
                         data: carDetails.data,
                         next: carDetails.collection.next,
@@ -290,7 +249,7 @@ export default function CarDetailsFormScreen({ route }) {
     }
 
     // function gets the next page from CarAPI using the given URL, appending the data to the given state setter
-    const getNextPageFromCarAPIAsync = async (urlPath, setCarDetails) => {
+    const getNextPageFromCarAPIAsync = async (urlPath, setCarDetails, valueName) => {
         if (urlPath.length === 0) return; // if no next page, do nothing
         const url = new URL(urlPath, CAR_API_BASE_URL); // construct URL
         // get next page of car details from API, append newly fetched items to existing data
@@ -301,7 +260,7 @@ export default function CarDetailsFormScreen({ route }) {
                 setCarDetails(prevDetails => {
                     // only if the new detail is not already in the list, append it
                     for (const detail of carDetails.data) {
-                        if (!prevDetails.data.some(d => d.id === detail.id)) {
+                        if (!prevDetails.data.some(d => d[valueName] === detail[valueName])) {
                             prevDetails.data.push(detail);
                         }
                     }
@@ -327,7 +286,7 @@ export default function CarDetailsFormScreen({ route }) {
         searchParams.set('limit', API_RESULT_LIMIT);
         searchParams.set('make', carMakesSearch);
         // get first page of car makes from CarAPI
-        getFirstPageFromCarAPIAsync(CAR_API_MAKES_URL, searchParams, setCarMakes, selectedCarMake);
+        getFirstPageFromCarAPIAsync(CAR_API_MAKES_URL, searchParams, setCarMakes, selectedCarMake, carMakesData.valueName);
     }, [carMakesSearch]);
 
     // handle car model dropdown changing on search filtering or change car make
@@ -337,11 +296,11 @@ export default function CarDetailsFormScreen({ route }) {
         // create URL search params for API call to CarAPI endpoint
         const searchParams = new URLSearchParams();
         searchParams.set('limit', API_RESULT_LIMIT);
-        searchParams.set('make_id', selectedCarMake.id);
+        searchParams.set('make', selectedCarMake);
         // use like operator to search for models starting with specified search
         searchParams.set('json', JSON.stringify([{ field: 'model', 'op': 'like', 'val': `${carModelsSearch}%` }]));
         // get first page of car models from CarAPI
-        getFirstPageFromCarAPIAsync(CAR_API_MODELS_URL, searchParams, setCarModels, selectedCarModel);
+        getFirstPageFromCarAPIAsync(CAR_API_MODELS_URL, searchParams, setCarModels, selectedCarModel, carModelsData.valueName);
     }, [selectedCarMake, carModelsSearch]);
 
     // handle car trim dropdown changing on search filtering or change car make
@@ -351,27 +310,65 @@ export default function CarDetailsFormScreen({ route }) {
         // create URL for API call to CarAPI endpoint
         const searchParams = new URLSearchParams();
         searchParams.set('limit', API_RESULT_LIMIT);
-        searchParams.set('make_id', selectedCarMake.id);
-        searchParams.set('model_id', selectedCarModel.id);
+        searchParams.set('make', selectedCarMake);
+        searchParams.set('model', selectedCarModel);
         // use like operator to search for trims containing specified search
         searchParams.set('json', JSON.stringify([{ field: 'description', 'op': 'like', 'val': `%${carTrimsSearch}%` }]));
         // get first page of car trims from CarAPI
-        getFirstPageFromCarAPIAsync(CAR_API_TRIMS_URL, searchParams, setCarTrims, selectedCarTrim);
+        getFirstPageFromCarAPIAsync(CAR_API_TRIMS_URL, searchParams, setCarTrims, selectedCarTrim, carTrimsData.valueName);
     }, [selectedCarMake, selectedCarModel, carTrimsSearch]);
 
+    // handle getting the car details when the car trim has been selected
+    useEffect(() => {
+        // wait until trims data dropdown exists and option selected
+        if (carTrims == null || selectedCarTrim == null) {
+            setSelectedCarTrimDetails(null);
+            return;
+        }
+
+        // get ID of trim from dropdown, halting if for some reason not found
+        const selectedCarTrimId = carTrims.data.find(detail => detail[carTrimsData.valueName] === selectedCarTrim)?.id;
+        if (selectedCarTrimId == null) {
+            setSelectedCarTrimDetails(null);
+            return;
+        }
+
+        // send a request for the trim details
+        (async () => {
+            const url = new URL(`${CAR_API_TRIMS_URL}/${selectedCarTrimId}`, CAR_API_BASE_URL);
+            try {
+                const trimResponse = await fetch(url.toString());
+                if (trimResponse.ok) {
+                    const trimDetails = await trimResponse.json();
+                    setSelectedCarTrimDetails(trimDetails);
+                } else {
+                    console.error('Something went wrong', trimResponse);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        })();
+
+    }, [carTrims, selectedCarTrim])
+
+    // handle saving the selections to the request on submit
     const submit = async () => {
         const requestDoc = doc(db, 'requests', request.id);
-        await updateDoc(requestDoc, {
-            carMake: selectedCarMake?.name,
-            carModel: selectedCarModel?.name,
-            carTrim: selectedCarTrim?.description,
-            carExteriorColor: selectedCarExteriorColor?.name,
-            carExteriorColorRgb: selectedCarExteriorColor?.rgb,
-            carInteriorColor: selectedCarInteriorColor?.name,
-            carInteriorColorRgb: selectedCarInteriorColor?.rgb,
-            estimatedCost,
-        });
-        navigation.navigate('ConfirmRequest', { requestId: request.id }); // last step, so confirm request
+        try {
+            await updateDoc(requestDoc, {
+                carMake: selectedCarMake ?? null,
+                carModel: selectedCarModel ?? null,
+                carTrim: selectedCarTrim ?? null,
+                carExteriorColor: selectedCarExteriorColor?.name ?? null,
+                carExteriorColorRgb: selectedCarExteriorColor?.rgb ?? null,
+                carInteriorColor: selectedCarInteriorColor?.name ?? null,
+                carInteriorColorRgb: selectedCarInteriorColor?.rgb ?? null,
+                estimatedCost: estimatedCost ?? null,
+            });
+            navigation.navigate('ConfirmRequest', { requestId: request.id }); // last step, so confirm request
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     // when dropdown with given ID opened, close other dropdowns
@@ -398,7 +395,7 @@ export default function CarDetailsFormScreen({ route }) {
 
         // when reach end of dropdown, load more data if is more to load
         const handleLoadMore = () => {
-            getNextPageFromCarAPIAsync(carDetailsData.next, carDetailsData.setDetails);
+            getNextPageFromCarAPIAsync(carDetailsData.next, carDetailsData.setDetails, carDetailsData.valueName);
         }
 
         // only add activity indicator to bottom of dropdown if there are more items to load
@@ -409,11 +406,11 @@ export default function CarDetailsFormScreen({ route }) {
         }
 
         // if any item selected, add clear selection option to start of dropdown
-        const items = [...carDetailsData.data];
+        const items = carDetailsData.data.map(data => ({ ...data, label: data[carDetailsData.valueName] }));
         if (carDetailsData.selected != null) {
             items.unshift({
-                [carDetailsData.schema.label]: 'Clear selection',
-                [carDetailsData.schema.value]: null,
+                [carDetailsData.valueName]: null,
+                label: 'Clear selection',
             });
         };
 
@@ -423,11 +420,14 @@ export default function CarDetailsFormScreen({ route }) {
                     {label}
                 </Text>
                 <DropDownPicker
-                    schema={carDetailsData.schema}
+                    schema={{
+                        label: 'label',
+                        value: carDetailsData.valueName,
+                    }}
                     listMode="MODAL"
                     open={carDetailsData.isDropdownOpen}
                     items={items}
-                    value={carDetailsData.selected?.id}
+                    value={carDetailsData.selected}
                     placeholder="None selected"
                     searchable={true}
                     disableLocalSearch={true}
@@ -452,7 +452,7 @@ export default function CarDetailsFormScreen({ route }) {
         // handle selecting or deselecting color palette
         const handleSelect = (item) => () => {
             // if this item is currently selected, deselect
-            if (item.id === carColorsData.selected?.id) {
+            if (item.name === carColorsData.selected?.name) {
                 carColorsData.setSelected(null);
             // otherwise, select this item
             } else {
@@ -478,7 +478,7 @@ export default function CarDetailsFormScreen({ route }) {
                                 style={[
                                     carDetailsFormStyles.colorPalette,
                                     { backgroundColor: `rgb(${item.rgb})` },
-                                    carColorsData.selected?.id === item.id && carDetailsFormStyles.selectedColorPalette,
+                                    carColorsData.selected?.name === item.name && carDetailsFormStyles.selectedColorPalette,
                                 ]}
                             />
                         </Pressable>
@@ -536,9 +536,9 @@ export default function CarDetailsFormScreen({ route }) {
                         renderCarDetailsDropdownPicker(carModelsData, 'Car Model')}
                     {selectedCarModel != null &&
                         renderCarDetailsDropdownPicker(carTrimsData, 'Car Trim')}
-                    {selectedCarTrim != null &&
+                    {selectedCarTrimDetails != null &&
                         renderCarColorPalettePicker(carExteriorColorsData, 'Exterior Color')}
-                    {selectedCarTrim != null &&
+                    {selectedCarTrimDetails != null &&
                         renderCarColorPalettePicker(carInteriorColorsData, 'Interior Color')}
                     {estimatedCost != null &&
                         renderFieldText(formatterCAD.format(estimatedCost), 'Estimated Cost')}
