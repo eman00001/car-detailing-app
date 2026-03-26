@@ -9,6 +9,7 @@ import { db } from '../../firebaseConfig';
 import { doc, collection, query, updateDoc, onSnapshot, where } from 'firebase/firestore';
 
 import LoadingScreen from '../LoadingScreen';
+import CustomerRequestStepIndicator from './CustomerRequestStepIndicator';
 
 import { formatterCAD } from '../../utils';
 import styles from '../../stylesheet';
@@ -515,6 +516,7 @@ export default function CarDetailsFormScreen({ route }) {
         <SafeAreaProvider>
             <SafeAreaView style={carDetailsFormStyles.container}>
                 <ScrollView contentContainerStyle={carDetailsFormStyles.carFormContainer}>
+                    <CustomerRequestStepIndicator currentStep={2} />
                     <View>
                         <Text style={styles.inputLabel}>Selected Service Type</Text>
                         <Text>{request.serviceType}</Text>

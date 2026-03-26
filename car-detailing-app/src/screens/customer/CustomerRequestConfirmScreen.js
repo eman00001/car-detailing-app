@@ -11,6 +11,7 @@ import ErrorScreen from '../ErrorScreen';
 
 import styles from '../../stylesheet';
 import { formatterCAD } from '../../utils';
+import CustomerRequestStepIndicator from './CustomerRequestStepIndicator';
 
 export default function CustomerRequestConfirmScreen({ route }) {
     const navigation = useNavigation();
@@ -75,6 +76,7 @@ export default function CustomerRequestConfirmScreen({ route }) {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView>
+                <CustomerRequestStepIndicator currentStep={4} />
                 <Text style={styles.h3}>Please Confirm your Request:</Text>
                 {renderRequestData('Service Type', request.serviceType)}
                 {renderRequestData('Description', request.description)}

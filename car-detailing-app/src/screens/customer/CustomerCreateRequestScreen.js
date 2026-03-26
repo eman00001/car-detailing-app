@@ -10,6 +10,7 @@ import LoadingScreen from "../LoadingScreen";
 import styles from "../../stylesheet";
 import ErrorScreen from "../ErrorScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomerRequestStepIndicator from "./CustomerRequestStepIndicator";
 
 export default function CustomerCreateRequestScreen({ route }) {
     const navigation = useNavigation();
@@ -175,6 +176,9 @@ export default function CustomerCreateRequestScreen({ route }) {
                 keyboardVerticalOffset={navigationHeaderHeight}
             >
                 <ScrollView contentContainerStyle={{ padding: 12, gap: 12 }}>
+
+                    <CustomerRequestStepIndicator currentStep={1} />
+
                     <Text style={{ fontSize: 22, fontWeight: "700" }}>New Request</Text>
 
                     <Text style={styles.inputLabel}>Service Type</Text>
