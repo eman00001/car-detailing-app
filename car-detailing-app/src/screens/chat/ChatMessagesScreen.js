@@ -153,6 +153,7 @@ export default function ChatMessagesScreen({ route }) {
             {/* ensure the message input and send button is visible above keyboard */}
             <KeyboardAvoidingView
                 behavior='padding'
+                style={styles.container}
                 keyboardVerticalOffset={navigationHeaderHeight}
             >
                 <FlatList

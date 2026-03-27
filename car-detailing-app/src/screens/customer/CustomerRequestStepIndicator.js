@@ -36,7 +36,7 @@ export default function CustomerRequestStepIndicator({ currentStep }) {
             </View>
             <View style={stepIndicatorStyles.stepsRow}>
                 {STEPS.map(({ name }, stepIndex) => (
-                    <View style={stepIndicatorStyles.stepContainer}>
+                    <View style={stepIndicatorStyles.stepContainer} key={name}>
                         <Text style={stepIndicatorStyles.stepText}>{name}</Text>
                         <View
                             style={[
