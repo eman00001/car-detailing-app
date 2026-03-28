@@ -132,6 +132,11 @@ export default StyleSheet.create({
         fontWeight: "600",
         marginBottom: 4,
     },
+    vehicle: {
+        fontSize: 16,
+        color: "#444",
+        marginBottom: 6,
+    },
     date: {
         fontSize: 14,
         color: "#666",

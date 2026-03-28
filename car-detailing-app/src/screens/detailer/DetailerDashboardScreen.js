@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, query, where, getDocs, or } from 'firebase/firestore';
-import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 
 import styles from '../../stylesheet';
@@ -61,12 +60,12 @@ export default function DetailerDashboardScreen() {
         return jobs;
     };
 
-    const getAllRequests = async () => {
+    const getAllRequests = async (userId) => {
         const q = query(
             collection(db, "requests"),
             or(
                 where("status", "==", "pending"),
-                where("detailerId", "==", userUid)
+                where("detailerId", "==", userId)
             )
         );
 
@@ -104,7 +103,7 @@ export default function DetailerDashboardScreen() {
                 }
 
                 (async () => {
-                    const data = await getAllRequests();
+                    const data = await getAllRequests(uid);
                     setRequests(data);
                 })();
             } catch (e) {
@@ -124,31 +123,6 @@ export default function DetailerDashboardScreen() {
     if (errorMessage != null) {
         return <ErrorScreen errorMessage={errorMessage} />;
     }
-
-    if (Platform.OS === "web") {
-        return (
-            <SafeAreaView style={styles.container}>
-                <Text style={styles.h1}>
-                    Welcome, {name ? name : "Unknown User"}
-                </Text>
-                <View style={styles.container}>
-                    <FlatList
-                        data={fakeData}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderItem}
-                        contentContainerStyle={{ paddingVertical: 20 }}
-                        showsVerticalScrollIndicator={false}
-                    />
-                </View>
-                <Text style={styles.h2}>Map</Text>
-                <View style={styles.container}>
-                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                        <Text>Map is only available on Android/iOS</Text>
-                    </View>
-                </View>
-            </SafeAreaView>
-        );
-    }
     
     return (
         <SafeAreaView style={styles.container}>
@@ -164,39 +138,16 @@ export default function DetailerDashboardScreen() {
                     showsVerticalScrollIndicator={false}
                 />
             </View>
-            {/* <Pressable
-                style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
-                onPress={() => navigation.navigate('ChatMessages')}
-                >
+            <Pressable
+                style={{ ...styles.button, ...styles.buttonPlain }}
+                onPress={() => navigation.navigate('DetailerDashboardMap', {
+                    title: 'Dashboard Map',
+                    markers,
+                    initialLocation: location,
+                })}
+            >
                 <Text style={styles.buttonText}>View on Map</Text>
-            </Pressable> */}
-            <Text style={styles.h2}>Map</Text>
-            <View style={styles.container}>
-                {location ? (
-                    <MapView
-                        style={styles.map}
-                        initialRegion={{
-                            latitude: location.latitude,
-                            longitude: location.longitude,
-                            latitudeDelta: 0.05,
-                            longitudeDelta: 0.05
-                        }}
-                        >
-                        {markers.map((marker) => (
-                            <Marker
-                            key={marker.id}
-                            coordinate={{
-                                latitude: marker.lat,
-                                longitude: marker.lng
-                            }}
-                            title={marker.title}
-                            />
-                        ))}
-                    </MapView>
-                ) : (
-                    <Text>Getting location...</Text>
-                )}
-            </View>
+            </Pressable>
         </SafeAreaView>
     );
 }

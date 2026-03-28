@@ -102,6 +102,42 @@ export default function App() {
         
 
         if (isDetailer) {
+            const DetailerDashboardStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerDashboardHome',
+                screens: {
+                    DetailerDashboardHome: {
+                        screen: DetailerDashboardScreen,
+                        options: {
+                            title: 'Detailer Dashboard',
+                        },
+                    },
+                    DetailerDashboardMap: {
+                        screen: DetailerMapScreen,
+                        options: {
+                            title: 'Dashboard Map',
+                        },
+                    },
+                },
+            });
+
+            const DetailerJobsStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerJobsHome',
+                screens: {
+                    DetailerJobsHome: {
+                        screen: DetailerJobsScreen,
+                        options: {
+                            title: 'Jobs',
+                        },
+                    },
+                    DetailerJobsMap: {
+                        screen: DetailerMapScreen,
+                        options: {
+                            title: 'Jobs Map',
+                        },
+                    },
+                },
+            });
+
             const TabNavigator = createBottomTabNavigator({
                 initialRouteName: 'DetailerDashboard',
                 screenOptions: {
@@ -109,21 +145,15 @@ export default function App() {
                 },
                 screens: {
                     DetailerDashboard: {
-                        screen: DetailerDashboardScreen,
+                        screen: DetailerDashboardStack,
                         options: {
                             title: 'Detailer Dashboard',
                         },
                     },
-                    DetailerJobsScreen: {
-                        screen: DetailerJobsScreen,
+                    DetailerJobs: {
+                        screen: DetailerJobsStack,
                         options: {
                             title: 'Jobs',
-                        },
-                    },
-                    DetailerMapScreen: {
-                        screen: DetailerMapScreen,
-                        options: {
-                            title: 'Map',
                         },
                     },
                     DetailerChats: {
