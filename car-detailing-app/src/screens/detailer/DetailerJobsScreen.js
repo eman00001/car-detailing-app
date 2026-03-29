@@ -123,7 +123,7 @@ export default function DetailerJobsScreen() {
 }
 
 const statusColors = {
-  pending: { color: "#915700" },    // orange
+  open: { color: "#915700" },    // orange
   accepted: { color: "#00b909" },   // blue
   completed: { color: "#008ac0" },  // green
   issue: { color: "#bd0d00" },

@@ -81,7 +81,7 @@ export default function DetailerDashboardScreen() {
     const getAllRequests = async () => {
         const q = query(
             collection(db, "requests"),
-            where("status", "==", "pending")
+            where("status", "==", "open")
         );
 
         const snapshot = await getDocs(q);
@@ -182,7 +182,7 @@ export default function DetailerDashboardScreen() {
 }
 
 const statusColors = {
-  pending: { color: "#915700" },    // orange
+  open: { color: "#915700" },    // orange
   accepted: { color: "#000000" },   // blue
   completed: { color: "#0f9713" },  // green
   issue: { color: "#bd0d00" },

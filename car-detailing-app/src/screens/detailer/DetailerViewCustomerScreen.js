@@ -46,7 +46,7 @@ export default function DetailerViewCustomerScreen({ route }) {
         try {
             const requestRef = doc(db, 'requests', requestData.id);
             const updatePayload = { status };
-            if (status === 'pending') {
+            if (status === 'open') {
                 updatePayload.acceptedByUid = null;
             }
             if (status === 'accepted') {
@@ -125,7 +125,7 @@ export default function DetailerViewCustomerScreen({ route }) {
                     </View>
                 ) : null}
 
-                {isDashboardSource && requestData.status === 'pending' ? (
+                {isDashboardSource && requestData.status === 'open' ? (
                     <View style={styles.detailActionRow}>
                         <Pressable
                             style={[styles.button, styles.buttonPrimary, { flex: 1 }]}
@@ -159,7 +159,7 @@ export default function DetailerViewCustomerScreen({ route }) {
                             </Pressable>
                             <Pressable
                                 style={[styles.button, styles.buttonPlain, { flex: 1 }]}
-                                onPress={() => updateRequestStatus('pending')}
+                                onPress={() => updateRequestStatus('open')}
                                 disabled={isSaving}
                             >
                                 <Text style={styles.buttonText}>Cancel</Text>
