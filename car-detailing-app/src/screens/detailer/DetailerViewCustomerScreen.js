@@ -1,22 +1,32 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView, View, Text, Image } from 'react-native';
+import { ScrollView, View, Text, Image, Pressable } from 'react-native';
+import { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { doc, updateDoc } from 'firebase/firestore';
 import styles from '../../stylesheet';
 import DetailerMap from '../../components/DetailerMap';
+import { db } from '../../firebaseConfig';
 
 export default function DetailerViewCustomerScreen({ route }) {
-    const { request = {} } = route.params || {};
+    const navigation = useNavigation();
+    const { request = {}, source } = route.params || {};
+    const [requestData, setRequestData] = useState(request);
+    const [isSaving, setIsSaving] = useState(false);
+    const isJobSource = source === 'jobs';
+    const isDashboardSource = source === 'dashboard';
 
-    const customerName = request.customerName || request.name || request.customer || 'Unknown Customer';
-    const description = request.description || request.notes || request.details || 'No description provided.';
-    const service = request.service || request.serviceType || 'Unknown service';
-    const locationText = request.location?.address || request.address || request.location || 'No location provided.';
-    const availableTimes = request.availableTimes || request.available_time || request.times || request.schedule || [];
-    const vehicle = request.vehicle || request.vehicleModel || request.vehicleType || 'Unknown vehicle';
-    const vehicleColor = request.vehicleColor || request.color || request.vehicle_color || 'Unknown color';
-    const vehiclePhoto = request.vehiclePhoto || request.photoUrl || request.imageUrl || request.image || request.photo || null;
+    const customerName = requestData.customerName || requestData.name || requestData.customer || 'Unknown Customer';
+    const description = requestData.description || requestData.notes || requestData.details || 'No description provided.';
+    const service = requestData.service || requestData.serviceType || 'Unknown service';
+    const locationText = requestData.location?.address || requestData.address || requestData.location || 'No location provided.';
+    const availableTimes = requestData.availableTimes || requestData.available_time || requestData.times || requestData.schedule || [];
+    const vehicle = requestData.vehicle || requestData.vehicleModel || requestData.vehicleType || 'Unknown vehicle';
+    const vehicleColor = requestData.vehicleColor || requestData.color || requestData.vehicle_color || 'Unknown color';
+    const vehiclePhoto = requestData.vehiclePhoto || requestData.photoUrl || requestData.imageUrl || requestData.image || requestData.photo || null;
 
-    const latitude = request.latitude ?? request.location?.latitude ?? request.coordinates?.latitude ?? request.location?.coords?.latitude;
-    const longitude = request.longitude ?? request.location?.longitude ?? request.coordinates?.longitude ?? request.location?.coords?.longitude;
+    const latitude = requestData.latitude ?? requestData.location?.latitude ?? requestData.coordinates?.latitude ?? requestData.location?.coords?.latitude;
+    const longitude = requestData.longitude ?? requestData.location?.longitude ?? requestData.coordinates?.longitude ?? requestData.location?.coords?.longitude;
     const markers = latitude != null && longitude != null ? [
         {
             id: 'request-location',
@@ -29,6 +39,33 @@ export default function DetailerViewCustomerScreen({ route }) {
     const formattedTimes = Array.isArray(availableTimes)
         ? availableTimes.join(', ')
         : availableTimes || 'Not specified';
+
+    const updateRequestStatus = async (status) => {
+        if (!requestData.id) return;
+        setIsSaving(true);
+        try {
+            const requestRef = doc(db, 'requests', requestData.id);
+            const updatePayload = { status };
+            if (status === 'pending') {
+                updatePayload.acceptedByUid = null;
+            }
+            if (status === 'accepted') {
+                const uid = await AsyncStorage.getItem('userUid');
+                if (uid) {
+                    updatePayload.acceptedByUid = uid;
+                }
+            }
+            await updateDoc(requestRef, updatePayload);
+            setRequestData({ ...requestData, ...updatePayload });
+            if (isDashboardSource || isJobSource) {
+                navigation.goBack();
+            }
+        } catch (error) {
+            console.warn('Failed to update request status:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -86,6 +123,49 @@ export default function DetailerViewCustomerScreen({ route }) {
                         <Text style={styles.detailLabel}>Vehicle Photo</Text>
                         <Image source={{ uri: vehiclePhoto }} style={styles.detailImage} resizeMode="cover" />
                     </View>
+                ) : null}
+
+                {isDashboardSource && requestData.status === 'pending' ? (
+                    <View style={styles.detailActionRow}>
+                        <Pressable
+                            style={[styles.button, styles.buttonPrimary, { flex: 1 }]}
+                            onPress={() => updateRequestStatus('accepted')}
+                            disabled={isSaving}
+                        >
+                            <Text style={styles.buttonText}>Accept</Text>
+                        </Pressable>
+                    </View>
+                ) : null}
+
+                {isJobSource ? (
+                    requestData.status === 'completed' ? (
+                        <View style={styles.detailActionRow}>
+                            <Pressable
+                                style={[styles.button, styles.buttonPlain, { flex: 1 }]}
+                                onPress={() => updateRequestStatus('accepted')}
+                                disabled={isSaving}
+                            >
+                                <Text style={styles.buttonText}>Mark Uncomplete</Text>
+                            </Pressable>
+                        </View>
+                    ) : (
+                        <View style={styles.detailActionRow}>
+                            <Pressable
+                                style={[styles.button, styles.buttonPrimary, { flex: 1, marginRight: 8 }]}
+                                onPress={() => updateRequestStatus('completed')}
+                                disabled={isSaving}
+                            >
+                                <Text style={styles.buttonText}>Mark Completed</Text>
+                            </Pressable>
+                            <Pressable
+                                style={[styles.button, styles.buttonPlain, { flex: 1 }]}
+                                onPress={() => updateRequestStatus('pending')}
+                                disabled={isSaving}
+                            >
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </Pressable>
+                        </View>
+                    )
                 ) : null}
             </ScrollView>
         </SafeAreaView>

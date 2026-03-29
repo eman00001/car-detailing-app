@@ -160,7 +160,7 @@ export default function App() {
                     DetailerDashboard: {
                         screen: DetailerDashboardStack,
                         options: {
-                            title: 'Detailer Dashboard',
+                            title: 'Dashboard',
                         },
                     },
                     DetailerJobs: {

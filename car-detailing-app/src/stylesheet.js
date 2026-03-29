@@ -78,6 +78,10 @@ export default StyleSheet.create({
     buttonPlain: {
         backgroundColor: '#DDD',
     },
+    buttonPrimary: {
+        backgroundColor: '#007AFF',
+        borderColor: '#007AFF',
+    },
     buttonDisabled: {
         backgroundColor: '#AAA',
     },
@@ -173,6 +177,11 @@ export default StyleSheet.create({
         borderRadius: 14,
         overflow: 'hidden',
         marginBottom: 18,
+    },
+    detailActionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 18,
     },
     cardPressed: {
         opacity: 0.7,
