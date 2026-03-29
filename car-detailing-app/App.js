@@ -20,6 +20,7 @@ import ChatMessagesScreen from './src/screens/chat/ChatMessagesScreen';
 import ErrorScreen from './src/screens/ErrorScreen';
 import LoadingScreen from './src/screens/LoadingScreen';
 import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScreen';
+import DetailerViewCustomerScreen from './src/screens/detailer/DetailerViewCustomerScreen';
 
 export default function App() {
     const [loading, setLoading] = useState(true);
@@ -117,6 +118,12 @@ export default function App() {
                             title: 'Dashboard Map',
                         },
                     },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
                 },
             });
 
@@ -133,6 +140,12 @@ export default function App() {
                         screen: DetailerMapScreen,
                         options: {
                             title: 'Jobs Map',
+                        },
+                    },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
                         },
                     },
                 },

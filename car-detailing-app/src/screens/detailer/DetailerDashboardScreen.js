@@ -30,7 +30,10 @@ export default function DetailerDashboardScreen() {
     ];
 
     const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => navigation.navigate('DetailerRequestDetails', { request: item })}
+    >
         <View style={styles.left}>
             <Text style={styles.service}>{item.service}</Text>
             <Text style={styles.vehicle}>{item.vehicle}</Text>
@@ -41,7 +44,7 @@ export default function DetailerDashboardScreen() {
             { item.status == 'pending' ?  <Pressable style={styles.button}><Text>Accept</Text></Pressable>: null}
             { item.status == 'upcoming' ?  <Text style={[styles.status, statusColors[item.status]]}>{item.status.toUpperCase()}</Text>: null}
         </View>
-    </View>
+    </Pressable>
     );
 
     const getUserJobs = async (userId) => {

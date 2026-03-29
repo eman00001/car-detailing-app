@@ -17,7 +17,10 @@ export default function DetailerJobsScreen() {
     const [errorMessage, setErrorMessage] = useState(null);
 
     const renderItem = ({ item }) => (
-        <View style={styles.card}>
+        <Pressable
+            style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+            onPress={() => navigation.navigate('DetailerRequestDetails', { request: item })}
+        >
             <View style={styles.left}>
                 <Text style={styles.service}>{item.service}</Text>
                 <Text style={styles.vehicle}>{item.vehicle}</Text>
@@ -26,7 +29,7 @@ export default function DetailerJobsScreen() {
             <View style={styles.right}>
                 {item.status === 'pending' ? <Text style={styles.status}>{item.status.toUpperCase()}</Text> : null}
             </View>
-        </View>
+        </Pressable>
     );
 
     useEffect(() => {

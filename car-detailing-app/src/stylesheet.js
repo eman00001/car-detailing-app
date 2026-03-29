@@ -146,6 +146,37 @@ export default StyleSheet.create({
         fontSize: 14,
         fontWeight: "700",
     },
+    detailScroll: {
+        padding: 16,
+    },
+    detailSection: {
+        marginBottom: 18,
+    },
+    detailLabel: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 6,
+    },
+    detailText: {
+        fontSize: 16,
+        lineHeight: 22,
+        color: '#333',
+    },
+    detailImage: {
+        width: '100%',
+        height: 220,
+        borderRadius: 14,
+        marginTop: 10,
+    },
+    detailMapContainer: {
+        height: 260,
+        borderRadius: 14,
+        overflow: 'hidden',
+        marginBottom: 18,
+    },
+    cardPressed: {
+        opacity: 0.7,
+    },
     map: {
         flex: 1
     }
