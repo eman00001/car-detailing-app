@@ -1,9 +1,18 @@
 import { StyleSheet } from "react-native";
 
+export const SECONDARY_BG_COLOR = '#fffbf9ff';
+
+export const PRIMARY_COLOR = 'hsla(195, 100%, 71%, 1.00)';
+export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(195, 77%, 90%, 1.00)';
+export const PRIMARY_FILL_DARK_COLOR = 'rgba(52, 171, 210, 1)';
+export const PRIMARY_BORDER_COLOR = 'hsla(196, 54%, 66%, 1.00)';
+export const PRIMARY_TEXT_COLOR = 'hsla(196, 100%, 23%, 1.00)';
+
 export default StyleSheet.create({
     // container stylings
     container: {
         flex: 1,
+        backgroundColor: SECONDARY_BG_COLOR,
     },
     containerCentered: {
         flex: 1,
@@ -65,21 +74,22 @@ export default StyleSheet.create({
 
     // button stylings
     button: {
-        borderColor: '#000',
+        borderColor: PRIMARY_BORDER_COLOR,
         borderWidth: 1,
         borderRadius: 10,
         padding: 10,
     },
     buttonText: {
+        color: PRIMARY_TEXT_COLOR,
         fontSize: 20,
         fontWeight: 700,
         textAlign: 'center',
     },
     buttonPlain: {
-        backgroundColor: '#DDD',
+        backgroundColor: PRIMARY_FILL_LIGHT_COLOR,
     },
     buttonDisabled: {
-        backgroundColor: '#AAA',
+        backgroundColor: PRIMARY_BORDER_COLOR,
     },
     
     // link stylings
@@ -143,5 +153,13 @@ export default StyleSheet.create({
     },
     map: {
         flex: 1
+    },
+    logo: {
+        width: 200,
+        height: 200,
+        alignSelf: 'center',
+        borderColor: PRIMARY_COLOR,
+        borderWidth: 5,
+        borderRadius: 5,
     }
 });

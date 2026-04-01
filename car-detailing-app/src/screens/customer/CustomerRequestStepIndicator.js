@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { PRIMARY_FILL_DARK_COLOR, PRIMARY_TEXT_COLOR } from '../../stylesheet';
 
 // the customer request has the following 4 steps
 const STEPS = [
@@ -51,9 +52,6 @@ export default function CustomerRequestStepIndicator({ currentStep }) {
     );
 }
 
-const STEP_INDICATOR_TEXT_COLOR = '#003BA9';
-const STEP_INDICATOR_FILL_COLOR = '#577FCA';
-
 const stepIndicatorStyles = StyleSheet.create({
     container: {
         alignItems: 'center',
@@ -72,7 +70,7 @@ const stepIndicatorStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: '50%',
-        backgroundColor: STEP_INDICATOR_FILL_COLOR,
+        backgroundColor: PRIMARY_FILL_DARK_COLOR,
     },
     currentStepIconText: {
         fontSize: 15,
@@ -82,7 +80,7 @@ const stepIndicatorStyles = StyleSheet.create({
     currentStepText: {
         fontSize: 18,
         fontWeight: 700,
-        color: STEP_INDICATOR_TEXT_COLOR,
+        color: PRIMARY_TEXT_COLOR,
     },
     stepsRow: {
         flexDirection: 'row',
@@ -95,7 +93,7 @@ const stepIndicatorStyles = StyleSheet.create({
     },
     stepText: {
         fontWeight: 700,
-        color: STEP_INDICATOR_TEXT_COLOR,
+        color: PRIMARY_TEXT_COLOR,
     },
     stepBar: {
         width: '100%',
@@ -104,6 +102,6 @@ const stepIndicatorStyles = StyleSheet.create({
         backgroundColor: '#DDD',
     },
     stepBarFilled: {
-        backgroundColor: STEP_INDICATOR_FILL_COLOR,
+        backgroundColor: PRIMARY_FILL_DARK_COLOR,
     }
 });

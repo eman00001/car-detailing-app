@@ -172,6 +172,7 @@ export default function CustomerCreateRequestScreen({ route }) {
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView
+                style={styles.container}
                 behavior='padding'
                 keyboardVerticalOffset={navigationHeaderHeight}
             >
