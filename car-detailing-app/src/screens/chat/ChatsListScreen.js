@@ -114,7 +114,7 @@ export default function ChatsListScreen() {
                         </View>
                     </Pressable>
                 )}
-                contentContainerStyle={styles.containerPadded}
+                contentContainerStyle={styles.listContainer}
                 keyExtractor={item => item.id}
             />
         </SafeAreaView>

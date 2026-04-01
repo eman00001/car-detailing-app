@@ -513,57 +513,49 @@ export default function CarDetailsFormScreen({ route }) {
     }
 
     return (
-        <SafeAreaProvider>
-            <SafeAreaView style={carDetailsFormStyles.container}>
-                <ScrollView contentContainerStyle={carDetailsFormStyles.carFormContainer}>
-                    <CustomerRequestStepIndicator currentStep={2} />
-                    <View>
-                        <Text style={styles.inputLabel}>Selected Service Type</Text>
-                        <Text>{request.serviceType}</Text>
-                    </View>
-                    <View style={carDetailsFormStyles.notice}>
-                        <Text style={carDetailsFormStyles.noticeIcon}>i</Text>
-                        <Text style={carDetailsFormStyles.noticeText}>
-                            Don't worry if you aren't sure about something that is asked here, you may leave
-                            it blank or input an answer you think may be correct. This is only to help you get
-                            a cost estimate and for us to get a rough understanding about your car.
-                        </Text>
-                        <Text style={carDetailsFormStyles.noticeText}>
-                            Note - the costs are only an estimation, and may go up or down. We can discuss
-                            one on one to negotiate prices.
-                        </Text>
-                    </View>
-                    {renderCarDetailsDropdownPicker(carMakesData, 'Car Make')}
-                    {selectedCarMake != null &&
-                        renderCarDetailsDropdownPicker(carModelsData, 'Car Model')}
-                    {selectedCarModel != null &&
-                        renderCarDetailsDropdownPicker(carTrimsData, 'Car Trim')}
-                    {selectedCarTrimDetails != null &&
-                        renderCarColorPalettePicker(carExteriorColorsData, 'Exterior Color')}
-                    {selectedCarTrimDetails != null &&
-                        renderCarColorPalettePicker(carInteriorColorsData, 'Interior Color')}
-                    {estimatedCost != null &&
-                        renderFieldText(formatterCAD.format(estimatedCost), 'Estimated Cost')}
+        <SafeAreaView style={styles.container}>
+            <ScrollView
+                style={styles.paddedContainer}
+                contentContainerStyle={[styles.listContainer, styles.paddedScrollContainer]}
+            >
+                <CustomerRequestStepIndicator currentStep={2} />
+                <View>
+                    <Text style={styles.inputLabel}>Selected Service Type</Text>
+                    <Text>{request.serviceType}</Text>
+                </View>
+                <View style={carDetailsFormStyles.notice}>
+                    <Text style={carDetailsFormStyles.noticeIcon}>i</Text>
+                    <Text style={carDetailsFormStyles.noticeText}>
+                        Don't worry if you aren't sure about something that is asked here, you may leave
+                        it blank or input an answer you think may be correct. This is only to help you get
+                        a cost estimate and for us to get a rough understanding about your car.
+                    </Text>
+                    <Text style={carDetailsFormStyles.noticeText}>
+                        Note - the costs are only an estimation, and may go up or down. We can discuss
+                        one on one to negotiate prices.
+                    </Text>
+                </View>
+                {renderCarDetailsDropdownPicker(carMakesData, 'Car Make')}
+                {selectedCarMake != null &&
+                    renderCarDetailsDropdownPicker(carModelsData, 'Car Model')}
+                {selectedCarModel != null &&
+                    renderCarDetailsDropdownPicker(carTrimsData, 'Car Trim')}
+                {selectedCarTrimDetails != null &&
+                    renderCarColorPalettePicker(carExteriorColorsData, 'Exterior Color')}
+                {selectedCarTrimDetails != null &&
+                    renderCarColorPalettePicker(carInteriorColorsData, 'Interior Color')}
+                {estimatedCost != null &&
+                    renderFieldText(formatterCAD.format(estimatedCost), 'Estimated Cost')}
 
-                    <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
-                        <Text style={styles.buttonText}>Submit</Text>
-                    </Pressable>
-                </ScrollView>
-            </SafeAreaView>
-        </SafeAreaProvider>
+                <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
+                    <Text style={styles.buttonText}>Submit</Text>
+                </Pressable>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const carDetailsFormStyles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FFF',
-    },
-    carFormContainer: {
-        margin: 20,
-        gap: 20,
-        paddingBottom: 20,
-    },
     notice: {
         backgroundColor: '#DDE',
         borderColor: '#AAD',

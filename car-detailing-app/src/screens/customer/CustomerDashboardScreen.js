@@ -87,7 +87,7 @@ export default function CustomerDashboardScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.paddedContainer}>
             <Text style={styles.h1}>
                 Welcome, {name ? name : "fakeUser"}
             </Text>
@@ -97,12 +97,12 @@ export default function CustomerDashboardScreen() {
                     data={requests}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
-                    contentContainerStyle={{ paddingVertical: 20 }}
+                    contentContainerStyle={styles.listContainer}
                     showsVerticalScrollIndicator={false}
                 />
             </View>
             <Pressable
-                style={[styles.button, isLoading ? styles.buttonDisabled : styles.buttonPlain]}
+                style={[styles.button, isLoading ? styles.buttonDisabled : styles.buttonPlain, { marginTop: 18 }]}
                 onPress={handleCreateRequest}
                 >
                 <Text style={styles.buttonText}>Create New Request</Text>

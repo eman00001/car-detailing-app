@@ -57,9 +57,9 @@ export default function CustomerRequestConfirmScreen({ route }) {
 
     // renders a line in the request summary, with a label and the specified data
     const renderRequestData = (label, data, isInline = true) => (
-        <View style={isInline && { flexDirection: 'row', gap: 12 }}>
+        <View style={isInline && { flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <Text style={styles.h5}>{label}</Text>
-            <Text>{data ?? 'Not specified'}</Text>
+            <Text style={{ flexShrink: 1 }}>{data ?? 'Not specified'}</Text>
         </View>
     );
 
@@ -75,7 +75,10 @@ export default function CustomerRequestConfirmScreen({ route }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView>
+            <ScrollView
+                style={styles.paddedContainer}
+                contentContainerStyle={[styles.listContainer, styles.paddedScrollContainer]}
+            >
                 <CustomerRequestStepIndicator currentStep={4} />
                 <Text style={styles.h3}>Please Confirm your Request:</Text>
                 {renderRequestData('Service Type', request.serviceType)}

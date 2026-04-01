@@ -29,8 +29,16 @@ export default StyleSheet.create({
         gap: 20,
         marginInline: 30,
     },
-    containerPadded: {
-        padding: 12,
+    paddedContainer: {
+        flex: 1,
+        padding: 18,
+        paddingBottom: 18,
+        backgroundColor: SECONDARY_BG_COLOR,
+    },
+    paddedScrollContainer: {
+        paddingBottom: 18, // scroll views don't apply padding to bottom, so new additional rule
+    },
+    listContainer: {
         gap: 12,
     },
 
@@ -72,6 +80,7 @@ export default StyleSheet.create({
         fontWeight: 700,
     },
     textInput: {
+        backgroundColor: '#FFF',
         borderColor: '#000',
         borderWidth: 1,
         borderRadius: 5,
@@ -130,7 +139,6 @@ export default StyleSheet.create({
         borderWidth: 1,
         padding: 18,
         borderRadius: 14,
-        marginBottom: 16,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
