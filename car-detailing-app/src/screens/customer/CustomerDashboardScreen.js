@@ -102,7 +102,7 @@ export default function CustomerDashboardScreen() {
                 />
             </View>
             <Pressable
-                style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
+                style={[styles.button, isLoading ? styles.buttonDisabled : styles.buttonPlain]}
                 onPress={handleCreateRequest}
                 >
                 <Text style={styles.buttonText}>Create New Request</Text>

@@ -165,7 +165,7 @@ export default function DetailerDashboardScreen() {
                 />
             </View>
             {/* <Pressable
-                style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
+                style={[styles.button, isLoading ? styles.buttonDisabled : styles.buttonPlain]}
                 onPress={() => navigation.navigate('ChatMessages')}
                 >
                 <Text style={styles.buttonText}>View on Map</Text>

@@ -75,7 +75,7 @@ export default function LoginScreen() {
                             />
                         </View>
                         <Pressable
-                            style={{...styles.button, ...(loading ? styles.buttonDisabled : styles.buttonPlain)}}
+                            style={[styles.button, loading ? styles.buttonDisabled : styles.buttonPlain]}
                             disabled={loading}
                             onPress={handleSignIn}
                         >
