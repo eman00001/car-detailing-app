@@ -1,8 +1,10 @@
 import { StyleSheet } from "react-native";
 
-export const SECONDARY_BG_COLOR = '#fffbf9ff';
+export const SECONDARY_BG_COLOR = 'rgba(255, 251, 249, 1)';
+export const SECONDARY_FILL_LIGHT_COLOR = 'rgba(238, 223, 216, 1)';
 
 export const PRIMARY_COLOR = 'hsla(195, 100%, 71%, 1.00)';
+export const PRIMARY_BG_COLOR = 'hsla(193, 100%, 98%, 1.00)';
 export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(195, 77%, 90%, 1.00)';
 export const PRIMARY_FILL_DARK_COLOR = 'rgba(52, 171, 210, 1)';
 export const PRIMARY_BORDER_COLOR = 'hsla(196, 54%, 66%, 1.00)';
@@ -18,6 +20,7 @@ export default StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: SECONDARY_BG_COLOR,
     },
     authContainer: {
         flex: 1,
@@ -25,6 +28,10 @@ export default StyleSheet.create({
         alignItems: 'stretch',
         gap: 20,
         marginInline: 30,
+    },
+    containerPadded: {
+        padding: 12,
+        gap: 12,
     },
 
     // heading stylings
@@ -119,6 +126,8 @@ export default StyleSheet.create({
     },
     card: {
         backgroundColor: "#FFFFFF",
+        borderColor: PRIMARY_FILL_LIGHT_COLOR,
+        borderWidth: 1,
         padding: 18,
         borderRadius: 14,
         marginBottom: 16,

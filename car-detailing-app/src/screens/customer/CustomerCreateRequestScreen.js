@@ -176,7 +176,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                 behavior='padding'
                 keyboardVerticalOffset={navigationHeaderHeight}
             >
-                <ScrollView contentContainerStyle={{ padding: 12, gap: 12 }}>
+                <ScrollView contentContainerStyle={styles.containerPadded}>
 
                     <CustomerRequestStepIndicator currentStep={1} />
 

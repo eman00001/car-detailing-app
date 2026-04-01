@@ -11,6 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
 
+import styles from '../../stylesheet';
+
 export default function ChatsListScreen() {
     const [loading, setLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState(null);
@@ -100,18 +102,19 @@ export default function ChatsListScreen() {
     }
 
     return (
-        <SafeAreaView>
+        <SafeAreaView style={styles.container}>
             <FlatList
                 data={chats}
                 renderItem={({ item }) => (
                     <Pressable
                         onPress={() => handlePressChat(item)}
                     >
-                        <View>
+                        <View style={styles.card}>
                             <Text>{item.chatName}</Text>
                         </View>
                     </Pressable>
                 )}
+                contentContainerStyle={styles.containerPadded}
                 keyExtractor={item => item.id}
             />
         </SafeAreaView>

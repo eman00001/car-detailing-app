@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, FlatList, Image, KeyboardAvoidingView
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { formatDateTime } from '../../utils';
-import styles from '../../stylesheet';
+import styles, { PRIMARY_BG_COLOR, PRIMARY_BORDER_COLOR, PRIMARY_FILL_DARK_COLOR, PRIMARY_FILL_LIGHT_COLOR, PRIMARY_TEXT_COLOR, SECONDARY_FILL_LIGHT_COLOR } from '../../stylesheet';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -259,7 +259,7 @@ const chatStyles = StyleSheet.create({
         alignItems: 'flex-end',
     },
     messageBox: {
-        backgroundColor: '#DDD',
+        backgroundColor: SECONDARY_FILL_LIGHT_COLOR,
         maxWidth: '90%', // add subtle size cap to width so that there will be space, makes easier distinguish which side for long messages
         padding: 12,
         borderRadius: 12,
@@ -267,7 +267,7 @@ const chatStyles = StyleSheet.create({
         gap: 12,
     },
     ownMessage: { // change color and direction of speech arrow if own message
-        backgroundColor: '#DDF',
+        backgroundColor: PRIMARY_FILL_LIGHT_COLOR,
         borderEndStartRadius: 12,
         borderEndEndRadius: 0,
         alignItems: 'flex-end',
@@ -284,8 +284,8 @@ const chatStyles = StyleSheet.create({
         alignSelf: 'flex-end', // if own message attachment, push to right of screen
     },
     messageInputContainer: {
-        backgroundColor: '#EEE',
-        borderTopColor: '#DDD',
+        backgroundColor: PRIMARY_BG_COLOR,
+        borderTopColor: PRIMARY_BORDER_COLOR,
         borderTopWidth: 2,
         padding: 12,
         gap: 6,
@@ -298,6 +298,8 @@ const chatStyles = StyleSheet.create({
         height: 100,
     },
     messageInputRow: {
+        backgroundColor: '#FFF',
+        borderColor: PRIMARY_BORDER_COLOR,
         borderWidth: 1,
         borderRadius: 6,
         padding: 12,
@@ -310,12 +312,14 @@ const chatStyles = StyleSheet.create({
         flex: 1,
     },
     currMessageBtn: {
-        backgroundColor: '#888',
+        backgroundColor: PRIMARY_FILL_DARK_COLOR,
+        borderColor: PRIMARY_TEXT_COLOR,
+        borderWidth: 1,
         padding: 6,
         borderRadius: 6,
     },
     currMessageBtnSending: {
-        backgroundColor: '#555',
+        backgroundColor: PRIMARY_TEXT_COLOR,
     },
     currMessageBtnText: {
         color: '#FFF',
