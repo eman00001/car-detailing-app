@@ -1,66 +1,111 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, Pressable, FlatList, Image } from "react-native";
-import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { firebase_auth, db } from "../../firebaseConfig";
-import styles from "../../stylesheet";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, FlatList, Pressable } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import styles from '../../stylesheet';
 
-export default function CustomerDashboardScreen({ navigation }) {
-  const user = firebase_auth.currentUser;
-  const [requests, setRequests] = useState([]);
+import { db } from '../../firebaseConfig';
+import { query, collection, where, orderBy, onSnapshot } from 'firebase/firestore';
 
-  useEffect(() => {
-    if (!user) return;
+export default function CustomerDashboardScreen() {
+    const [userUid, setUserUid] = useState(null);
+    const [name, setName] = useState(null);
+    const [requests, setRequests] = useState([]);
+    const [isLoading, setLoading] = useState(true);
+    const navigation = useNavigation();
 
-    const q = query(
-      collection(db, "requests"),
-      where("customerUid", "==", user.uid),
-      orderBy("createdAt", "desc")
+     const renderItem = ({ item }) => (
+    <View style={styles.card}>
+        <View style={styles.left}>
+            <Text style={styles.service}>{item.serviceType}</Text>
+            <Text style={styles.vehicle}>Vehicle</Text>
+            <Text style={styles.date}>{item.preferredTime}</Text>
+        </View>
+
+        <View style={styles.right}>
+            <Text style={[styles.status, statusColors[item.status]]}>
+            {item.status.toUpperCase()}
+            </Text>
+        </View>
+        </View>
     );
 
-    const unsub = onSnapshot(q, (snap) => {
-      setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    // get the user's UID and name from async storage
+    useEffect(() => {
+        (async () => {
+            // get the user ID from async storage, showing an error if not found
+            try {
+                const userUid = await AsyncStorage.getItem('userUid');
+                const name = await AsyncStorage.getItem('userName');
+                setUserUid(userUid);
+                setName(name);
+                if (userUid == null) { // user ID should not be null on this screen, so if is show error
+                    setErrorMessage('You must be signed in to view this screen');
+                }
+            } catch (e) {
+                console.error(e);
+                setErrorMessage('Something went wrong');
+            }
+        })();
+    }, []);
 
-    return () => unsub();
-  }, [user?.uid]);
+    // get requests from database
+    useEffect(() => {
+        if (!userUid) return;
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ padding: 16, gap: 12, flex: 1 }}>
-        <Text style={{ fontSize: 22, fontWeight: "700" }}>Customer Dashboard</Text>
+        const q = query(
+            collection(db, "requests"),
+            where("customerUid", "==", userUid),
+            orderBy("createdAt", "desc")
+        );
 
-        <Pressable
-          onPress={() => navigation.navigate("Create Request")}
-          style={{ ...styles.button, ...styles.buttonPlain }}
-        >
-          <Text style={styles.buttonText}>Create New Request</Text>
-        </Pressable>
+        const unsubscribe = onSnapshot(q, (snap) => {
+            const requests = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            setRequests(requests);
+            setLoading(false);
+        });
 
-        <Text style={{ fontSize: 18, fontWeight: "700" }}>My Requests</Text>
+        return unsubscribe;
+    }, [userUid]);
 
-        <FlatList
-          data={requests}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={{ borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <Text style={{ fontSize: 18, fontWeight: "700" }}>{item.serviceType}</Text>
-              {item.photoUrl ? (
-                <Image
-                  source={{ uri: item.photoUrl }}
-                  style={{ width: "100%", height: 180, borderRadius: 10, marginVertical: 10 }}
-                  resizeMode="cover"
+    if (isLoading) {
+        return (
+        <SafeAreaView style={styles.container}>
+            <Text>Loading...</Text>
+        </SafeAreaView>
+        );
+    }
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <Text style={styles.h1}>
+                Welcome, {name ? name : "fakeUser"}
+            </Text>
+            <Text style={styles.h2}>My Requests</Text>
+            <View style={styles.container}>
+                <FlatList
+                    data={requests}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderItem}
+                    contentContainerStyle={{ paddingVertical: 20 }}
+                    showsVerticalScrollIndicator={false}
                 />
-              ) : null}
-              <Text numberOfLines={2}>{item.description}</Text>
-              <Text>Location: {item.locationText}</Text>
-              <Text>Availability: {item.availabilityText ?? item.preferredTime}</Text>
-              <Text style={{ fontWeight: "700" }}>Status: {item.status}</Text>
             </View>
-          )}
-          ListEmptyComponent={<Text>No requests yet.</Text>}
-        />
-      </View>
-    </SafeAreaView>
-  );
+            <Pressable
+                style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
+                onPress={() => navigation.navigate('CreateRequest')}
+                >
+                <Text style={styles.buttonText}>Create New Request</Text>
+            </Pressable>
+        </SafeAreaView>
+    );
 }
+
+const statusColors = {
+  open: { color: "#770" },
+  pending: { color: "#915700" },    // orange
+  accepted: { color: "#088" },   // blue
+  completed: { color: "#0f9713" },  // green
+  issue: { color: "#bd0d00" },
+};

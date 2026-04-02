@@ -50,16 +50,13 @@ export default function CustomerTakePhotoScreen({ navigation, route }) {
   const usePhoto = async () => {
     if (!capturedPhoto?.uri) return;
 
-    navigation.navigate("Customer Home", {
-      screen: "Create Request",
-      params: {
-        draftRequest: route.params?.draftRequest ?? null,
-        capturedPhoto: {
-          localUri: capturedPhoto.uri,
-          uploadUri: capturedPhoto.uploadUri ?? capturedPhoto.uri,
-          uploadedUrl: null,
-          publicId: null,
-        },
+    navigation.navigate("CreateRequest", {
+      draftRequest: route.params?.draftRequest ?? null,
+      capturedPhoto: {
+        localUri: capturedPhoto.uri,
+        uploadUri: capturedPhoto.uploadUri ?? capturedPhoto.uri,
+        uploadedUrl: null,
+        publicId: null,
       },
     });
   };

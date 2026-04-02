@@ -1,11 +1,13 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { createStaticNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useEffect, useState } from 'react';
 import { firebase_auth, db } from './src/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
@@ -15,96 +17,199 @@ import DetailerJobsScreen from './src/screens/detailer/DetailerJobsScreen';
 import CustomerDashboardScreen from './src/screens/customer/CustomerDashboardScreen';
 import CustomerCreateRequestScreen from './src/screens/customer/CustomerCreateRequestScreen';
 import CustomerTakePhotoScreen from './src/screens/customer/CustomerTakePhotoScreen';
-import ChatScreen from './src/screens/chat/ChatScreen';
-
-function CustomerTabs() {
-    const Tab = createBottomTabNavigator();
-
-    return (
-        <Tab.Navigator initialRouteName="Customer Dashboard">
-            <Tab.Screen name="Customer Dashboard" component={CustomerDashboardScreen} />
-            <Tab.Screen name="Customer Chat" component={ChatScreen} />
-            <Tab.Screen name="Log Out" component={LogOutScreen} />
-            <Tab.Screen name="Create Request" component={CustomerCreateRequestScreen} />
-        </Tab.Navigator>
-    );
-}
+import ChatsListScreen from './src/screens/chat/ChatsListScreen';
+import ChatMessagesScreen from './src/screens/chat/ChatMessagesScreen';
+import ErrorScreen from './src/screens/ErrorScreen';
+import LoadingScreen from './src/screens/LoadingScreen';
+import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScreen';
 
 export default function App() {
+    const [loading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState(null);
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [isDetailer, setIsDetailer] = useState(false);
 
     useEffect(() => {
-        onAuthStateChanged(firebase_auth, async (user) => {
+        const unsubscribe = onAuthStateChanged(firebase_auth, async (user) => {
+            setLoading(true); // begin loading
+            setErrorMessage(null); // remove error message
             if (user) {
-                console.log("Try Sign In");
                 try {
-                    const querySnapshot = await getDocs(
-                        query(
-                            collection(db, 'detailers'),
-                            where('uid', '==', user.uid)
-                        )
-                    );
-                    if (querySnapshot.empty) {
-                        setIsDetailer(false);
+                    const docSnapshot = await getDoc(doc(db, 'users', user.uid));
+                    // store user ID in async storage for quick retrieval
+                    await AsyncStorage.setItem('userUid', user.uid);
+                    if (docSnapshot.exists()) {
+                        const data = docSnapshot.data();
+                        setIsDetailer(data.isDetailer ?? false); // if no isDetailer field, is customer
+                        await AsyncStorage.setItem('userName', data.name); // store user name in async storage for quick retrieval
                     } else {
-                        setIsDetailer(true);
+                        setIsDetailer(false); // if not found, default to customer
                     }
                     setIsSignedIn(true);
 
+                // if something went wrong, show error message on screen
                 } catch (error) {
                     console.warn(error);
+                    setErrorMessage('Something went wrong');
                 }
             } else {
                 setIsSignedIn(false);
             }
+
+            setLoading(false); // stop loading once finish
         });
+
+        return unsubscribe;
     }, []); // setup listner on load only
 
-    if (isSignedIn) {
-        const Tab = createBottomTabNavigator();
-        if (isDetailer) {
-            const Tab = createBottomTabNavigator();
-            return (
-                <SafeAreaProvider>
-                    <NavigationContainer>
-                        <Tab.Navigator initialRouteName="Detailer Dashboard">
-                            <Tab.Screen name="Detailer Dashboard" component={DetailerDashboardScreen} />
-                            <Tab.Screen name="Detailer Jobs" component={DetailerJobsScreen} />
-                            <Tab.Screen name="Detailer Chat" component={ChatScreen} />
-                            <Tab.Screen name="Log Out" component={LogOutScreen} />
-                        </Tab.Navigator>
-                    </NavigationContainer>
-                </SafeAreaProvider>
-            );
-        } else {
-            const Stack = createNativeStackNavigator();
-            return (
-                <SafeAreaProvider>
-                    <NavigationContainer>
-                        <Stack.Navigator>
-                            <Stack.Screen
-                                name="Customer Home"
-                                component={CustomerTabs}
-                                options={{ headerShown: false }}
-                            />
-                            <Stack.Screen name="Take Photo" component={CustomerTakePhotoScreen} />
-                        </Stack.Navigator>
-                    </NavigationContainer>
-                </SafeAreaProvider>
-            );
-        }
-    } else {
-        const Stack = createNativeStackNavigator();
+    // if loading, show loading icon
+    if (loading) {
         return (
             <SafeAreaProvider>
-                <NavigationContainer>
-                    <Stack.Navigator initialRouteName="Login">
-                        <Stack.Screen name="Login" component={LoginScreen} />
-                        <Stack.Screen name="Register" component={RegisterScreen} />
-                    </Stack.Navigator>
-                </NavigationContainer>
+                <LoadingScreen />
             </SafeAreaProvider>
         );
     }
+
+    // if an error is found, display it to screen
+    if (errorMessage != null) {
+        return (
+            <SafeAreaProvider>
+                <ErrorScreen errorMessage={errorMessage} />
+            </SafeAreaProvider>
+        );
+    }
+
+    let Navigation;
+
+    if (isSignedIn) {
+        const ChatNavigator = createNativeStackNavigator({
+            initialRouteName: 'ChatsList',
+            screens: {
+                ChatsList: {
+                    screen: ChatsListScreen,
+                    options: {
+                        title: 'Chats',
+                    },
+                },
+                ChatMessages: {
+                    screen: ChatMessagesScreen,
+                    options: ({ route }) => ({
+                        title: `Messages with ${route.params?.chatName ?? 'Unknown User'}`,
+                    }),
+                },
+            },
+        })
+
+        if (isDetailer) {
+            const TabNavigator = createBottomTabNavigator({
+                initialRouteName: 'DetailerDashboard',
+                screenOptions: {
+                    headerShown: false,
+                },
+                screens: {
+                    DetailerDashboard: {
+                        screen: DetailerDashboardScreen,
+                        options: {
+                            title: 'Detailer Dashboard',
+                        },
+                    },
+                    DetailerJobsScreen: {
+                        screen: DetailerJobsScreen,
+                        options: {
+                            title: 'Jobs',
+                        },
+                    },
+                    DetailerMapScreen: {
+                        screen: DetailerMapScreen,
+                        options: {
+                            title: 'Map',
+                        },
+                    },
+                    DetailerChats: {
+                        screen: ChatNavigator,
+                        options: {
+                            title: 'Chats',
+                        },
+                    },
+                    LogOut: {
+                        screen: LogOutScreen,
+                        options: {
+                            title: 'Log Out',
+                        },
+                    },
+                },
+            });
+            Navigation = createStaticNavigation(TabNavigator);
+
+        } else {
+            const TabNavigator = createBottomTabNavigator({
+                initialRouteName: 'CustomerDashboard',
+                screenOptions: {
+                    headerShown: false,
+                },
+                screens: {
+                    CustomerDashboard: {
+                        screen: CustomerDashboardScreen,
+                        options: {
+                            title: 'Customer Dashboard',
+                        },
+                    },
+                    CustomerChats: {
+                        screen: ChatNavigator,
+                        options: {
+                            title: 'Chats',
+                        },
+                    },
+                    LogOut: {
+                        screen: LogOutScreen,
+                        options: {
+                            title: 'Log Out',
+                        },
+                    },
+                },
+            });
+            const CreateRequestStack = createNativeStackNavigator({
+                initialRouteName: 'Home',
+                screens: {
+                    Home: {
+                        screen: TabNavigator,
+                        options: {
+                            title: 'Home',
+                            headerShown: false,
+                        },
+                    },
+                    CreateRequest: {
+                        screen: CustomerCreateRequestScreen,
+                        options: {
+                            title: 'Create Request',
+                        },
+                    },
+                    TakePhoto: {
+                        screen: CustomerTakePhotoScreen,
+                        options: {
+                            title: 'Take Photo',
+                        },
+                    },
+                }
+            })
+            Navigation = createStaticNavigation(CreateRequestStack);
+        }
+
+    } else {
+        const StackNavigator = createNativeStackNavigator({
+            initialRouteName: 'Login',
+            screens: {
+                Login: LoginScreen,
+                Register: RegisterScreen,
+            },
+        });
+        Navigation = createStaticNavigation(StackNavigator);
+    }
+
+    return (
+        <SafeAreaProvider>
+            <Navigation></Navigation>
+        </SafeAreaProvider>
+    )
 }

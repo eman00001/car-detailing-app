@@ -1,83 +1,209 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, Pressable, Alert, Image } from "react-native";
-import { useEffect, useState } from "react";
-import { collection, doc, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
-import { firebase_auth, db } from "../../firebaseConfig";
-import styles from "../../stylesheet";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, Platform, View, Text, Pressable } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { collection, query, where, getDocs, or } from 'firebase/firestore';
+import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
+
+import styles from '../../stylesheet';
+import { db } from '../../firebaseConfig';
+import LoadingScreen from '../LoadingScreen';
+import ErrorScreen from '../ErrorScreen';
+
+
 
 export default function DetailerDashboardScreen() {
-  const user = firebase_auth.currentUser;
-  const [openRequests, setOpenRequests] = useState([]);
+    const [name, setName] = useState(null);
+    const [userUid, setUserUid] = useState(null);
+    const [jobs, setJobs] = useState(null);
+    const [requests, setRequests] = useState(null);
+    const [isLoading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState(null);
+    const [location, setLocation] = useState(null);
+    const navigation = useNavigation();
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "requests"),
-      where("status", "==", "open"),
-      orderBy("createdAt", "desc")
+    const markers = [
+        { id: 1, lat: 44.6488, lng: -63.5752, title: "Job 1" },
+        { id: 2, lat: 44.6510, lng: -63.5800, title: "Job 2" },
+        { id: 3, lat: 44.6460, lng: -63.5700, title: "Job 3" }
+    ];
+
+    const renderItem = ({ item }) => (
+    <View style={styles.card}>
+        <View style={styles.left}>
+            <Text style={styles.service}>{item.serviceType}</Text>
+            <Text style={styles.vehicle}>Vehicle</Text>
+            <Text style={styles.date}>{item.preferredTime}</Text>
+        </View>
+
+        <View style={styles.right}>
+            { item.status == 'open' ?  <Pressable style={styles.button}><Text>Accept</Text></Pressable>: null}
+            { item.status == 'accepted' ?  <Text style={[styles.status, statusColors[item.status]]}>{item.status.toUpperCase()}</Text>: null}
+        </View>
+    </View>
     );
 
-    const unsub = onSnapshot(q, (snap) => {
-      setOpenRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    const getUserJobs = async (userId) => {
+        const q = query(
+            collection(db, "requests"),
+            where("detailerId", "==", userId)
+        );
 
-    return () => unsub();
-  }, []);
+        const snapshot = await getDocs(q);
 
-  const accept = async (id) => {
-    if (!user) return;
+        const jobs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
 
-    try {
-      await updateDoc(doc(db, "requests", id), {
-        status: "accepted",
-        acceptedByUid: user.uid,
-        acceptedByName: user.displayName ?? "Detailer",
-      });
-      Alert.alert("Accepted", "This job is now in your jobs list.");
-    } catch (e) {
-      console.warn(e);
-      Alert.alert("Error", "Could not accept job.");
-    }
-  };
+        return jobs;
+    };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ padding: 16, gap: 12, flex: 1 }}>
-        <Text style={{ fontSize: 22, fontWeight: "700" }}>Detailer Dashboard</Text>
+    const getAllRequests = async () => {
+        const q = query(
+            collection(db, "requests"),
+            or(
+                where("status", "==", "open"),
+                where("detailerId", "==", userUid)
+            )
+        );
 
-        <FlatList
-          data={openRequests}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={{ borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 10 }}>
-              <Text style={{ fontSize: 18, fontWeight: "700" }}>{item.serviceType}</Text>
-              <Text>Customer: {item.customerName}</Text>
-              {item.photoUrl ? (
-                <Image
-                  source={{ uri: item.photoUrl }}
-                  style={{ width: "100%", height: 180, borderRadius: 10, marginVertical: 10 }}
-                  resizeMode="cover"
-                />
-              ) : null}
-              <Text numberOfLines={2}>{item.description}</Text>
-              <Text>Location: {item.locationText}</Text>
-              <Text>Availability: {item.availabilityText ?? item.preferredTime}</Text>
+        const snapshot = await getDocs(q);
 
-              <Pressable
-                onPress={() =>
-                  Alert.alert("Accept job?", "Do you want to accept this request?", [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Accept", onPress: () => accept(item.id) },
-                  ])
+        const requests = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return requests;
+    };
+
+    useEffect(() => {
+        (async () => {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+
+            if (status !== "granted") {
+                console.log("Permission denied");
+                return;
+            }
+
+            const currentLocation = await Location.getCurrentPositionAsync({});
+            setLocation(currentLocation.coords);
+
+            // get the user ID from async storage, showing an error if not found
+            try {
+                const name = await AsyncStorage.getItem("userName");
+                if (name) setName(name);
+
+                const uid = await AsyncStorage.getItem('userUid');
+                setUserUid(uid);
+                if (uid == null) { // user ID should not be null on this screen, so if is show error
+                    setErrorMessage('You must be signed in to view this screen');
                 }
-                style={{ ...styles.button, ...styles.buttonPlain, marginTop: 8 }}
-              >
-                <Text style={styles.buttonText}>Accept</Text>
-              </Pressable>
+
+                (async () => {
+                    const data = await getAllRequests();
+                    setRequests(data);
+                })();
+            } catch (e) {
+                console.error(e);
+                setErrorMessage('Something went wrong');
+            }
+            setLoading(false);
+        })();
+    }, []);
+
+    // if loading, show loading icon
+    if (isLoading) {
+        return <LoadingScreen />;
+    }
+
+    // if error found, show message on screen
+    if (errorMessage != null) {
+        return <ErrorScreen errorMessage={errorMessage} />;
+    }
+
+    if (Platform.OS === "web") {
+        return (
+            <SafeAreaView style={styles.container}>
+                <Text style={styles.h1}>
+                    Welcome, {name ? name : "Unknown User"}
+                </Text>
+                <View style={styles.container}>
+                    <FlatList
+                        data={fakeData}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderItem}
+                        contentContainerStyle={{ paddingVertical: 20 }}
+                        showsVerticalScrollIndicator={false}
+                    />
+                </View>
+                <Text style={styles.h2}>Map</Text>
+                <View style={styles.container}>
+                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                        <Text>Map is only available on Android/iOS</Text>
+                    </View>
+                </View>
+            </SafeAreaView>
+        );
+    }
+    
+    return (
+        <SafeAreaView style={styles.container}>
+            <Text style={styles.h1}>
+                Welcome, {name ? name : "Unknown User"}
+            </Text>
+            <View style={styles.container}>
+                <FlatList
+                    data={requests}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderItem}
+                    contentContainerStyle={{ paddingVertical: 20 }}
+                    showsVerticalScrollIndicator={false}
+                />
             </View>
-          )}
-          ListEmptyComponent={<Text>No open requests right now.</Text>}
-        />
-      </View>
-    </SafeAreaView>
-  );
+            {/* <Pressable
+                style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
+                onPress={() => navigation.navigate('ChatMessages')}
+                >
+                <Text style={styles.buttonText}>View on Map</Text>
+            </Pressable> */}
+            <Text style={styles.h2}>Map</Text>
+            <View style={styles.container}>
+                {location ? (
+                    <MapView
+                        style={styles.map}
+                        initialRegion={{
+                            latitude: location.latitude,
+                            longitude: location.longitude,
+                            latitudeDelta: 0.05,
+                            longitudeDelta: 0.05
+                        }}
+                        >
+                        {markers.map((marker) => (
+                            <Marker
+                            key={marker.id}
+                            coordinate={{
+                                latitude: marker.lat,
+                                longitude: marker.lng
+                            }}
+                            title={marker.title}
+                            />
+                        ))}
+                    </MapView>
+                ) : (
+                    <Text>Getting location...</Text>
+                )}
+            </View>
+        </SafeAreaView>
+    );
 }
+
+const statusColors = {
+  pending: { color: "#915700" },    // orange
+  upcoming: { color: "#000000" },   // blue
+  completed: { color: "#0f9713" },  // green
+  issue: { color: "#bd0d00" },
+};

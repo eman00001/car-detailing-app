@@ -320,10 +320,10 @@ export default function CustomerCreateRequestScreen({ navigation, route }) {
       setMapRegion(null);
       setPhotoData(null);
 
-      if (typeof navigation.jumpTo === "function") {
-        navigation.jumpTo("Customer Dashboard");
+      if (typeof navigation.popToTop === "function") {
+        navigation.popToTop();
       } else {
-        navigation.navigate("Customer Dashboard");
+        navigation.navigate("Home");
       }
 
       if (photoUploadWarning) {
@@ -455,7 +455,7 @@ export default function CustomerCreateRequestScreen({ navigation, route }) {
 
         <Pressable
           onPress={() =>
-            navigation.navigate("Take Photo", {
+            navigation.navigate("TakePhoto", {
               draftRequest: {
                 serviceType,
                 description,
