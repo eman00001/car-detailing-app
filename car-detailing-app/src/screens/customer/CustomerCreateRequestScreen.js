@@ -30,26 +30,26 @@ function buildLocationLabel(parts) {
 }
 
 async function reverseGeocodeCoords(latitude, longitude) {
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${
-        encodeURIComponent(latitude)
-    }&lon=${
-        encodeURIComponent(longitude)
-    }`,
-    {
-      headers: {
-        Accept: "application/json",
-        "Accept-Language": "en",
-      },
+    const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${
+            encodeURIComponent(latitude)
+        }&lon=${
+            encodeURIComponent(longitude)
+        }`,
+        {
+            headers: {
+                Accept: "application/json",
+                "Accept-Language": "en",
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(`Reverse geocoding failed with status ${response.status}`);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error(`Reverse geocoding failed with status ${response.status}`);
-  }
-
-  const result = await response.json();
-  return result.display_name || "";
+    const result = await response.json();
+    return result.display_name || "";
 }
 
 export default function CustomerCreateRequestScreen({ route }) {
@@ -160,149 +160,147 @@ export default function CustomerCreateRequestScreen({ route }) {
         return unsubscribe;
     }, []);
 
-  useEffect(() => {
-    const trimmedQuery = locationQuery.trim();
+    useEffect(() => {
+        const trimmedQuery = locationQuery.trim();
 
-    if (!trimmedQuery || trimmedQuery.length < 3) {
-      setLocationResults(selectedLocation ? [selectedLocation] : []); // if query too short, show only current if selected
-      setIsSearching(false);
-      return;
-    }
-
-    if (selectedLocation?.label === trimmedQuery) {
-      setLocationResults([selectedLocation]); // so that selected location shows up in dropdown
-      setIsSearching(false);
-      return;
-    }
-
-    let cancelled = false;
-    const timeoutId = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=20&q=${encodeURIComponent(
-            trimmedQuery
-          )}`,
-          {
-            headers: {
-              Accept: "application/json",
-              "Accept-Language": "en",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Search failed with status ${response.status}`);
+        if (!trimmedQuery || trimmedQuery.length < 3) {
+            setLocationResults(selectedLocation ? [selectedLocation] : []); // if query too short, show only current if selected
+            setIsSearching(false);
+            return;
         }
 
-        const results = await response.json();
-        if (!cancelled) {
-            const locationResults = results.map((item) => ({
-                id: `${item.place_id}`,
-                label: item.display_name,
-                latitude: Number(item.lat),
-                longitude: Number(item.lon),
-            }));
-            // add currently selected location to top of dropdown, removing if in search
-            if (selectedLocation != null) {
-                const selectedLocationIndex = locationResults.findIndex(location => location.id === selectedLocation.id);
-                if (selectedLocationIndex !== -1) {
-                    locationResults.splice(selectedLocationIndex, 1);
+        if (selectedLocation?.label === trimmedQuery) {
+            setLocationResults([selectedLocation]); // so that selected location shows up in dropdown
+            setIsSearching(false);
+            return;
+        }
+
+        let cancelled = false;
+        const timeoutId = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=20&q=${
+                        encodeURIComponent(trimmedQuery)
+                    }`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            "Accept-Language": "en",
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Search failed with status ${response.status}`);
                 }
-                locationResults.unshift(selectedLocation); // add to start
+
+                const results = await response.json();
+                if (!cancelled) {
+                    const locationResults = results.map((item) => ({
+                        id: `${item.place_id}`,
+                        label: item.display_name,
+                        latitude: Number(item.lat),
+                        longitude: Number(item.lon),
+                    }));
+                    // add currently selected location to top of dropdown, removing if in search
+                    if (selectedLocation != null) {
+                        const selectedLocationIndex = locationResults.findIndex(location => location.id === selectedLocation.id);
+                        if (selectedLocationIndex !== -1) {
+                            locationResults.splice(selectedLocationIndex, 1);
+                        }
+                        locationResults.unshift(selectedLocation); // add to start
+                    }
+
+                    setLocationResults(locationResults);
+                }
+            } catch (error) {
+                console.warn(error);
+                if (!cancelled) {
+                    setLocationResults([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setIsSearching(false);
+                }
+            }
+        }, 350);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeoutId);
+        };
+    }, [locationQuery, selectedLocation]);
+
+    const resolveTypedLocation = async () => {
+        const trimmedQuery = locationQuery.trim();
+        if (!trimmedQuery) return null;
+
+        const matches = await Location.geocodeAsync(trimmedQuery);
+        if (!matches.length) return null;
+
+        return {
+            label: trimmedQuery,
+            latitude: matches[0].latitude,
+            longitude: matches[0].longitude,
+            source: "typed",
+        };
+    };
+
+    const useCurrentLocation = async () => {
+        setIsFetchingLocation(true);
+
+        try {
+            const permission = await Location.requestForegroundPermissionsAsync();
+            if (!permission.granted) {
+                Alert.alert("Permission needed", "Please allow location access to use your current location.");
+                return;
             }
 
-            setLocationResults(locationResults);
-        }
-      } catch (error) {
-        console.warn(error);
-        if (!cancelled) {
-          setLocationResults([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsSearching(false);
-        }
-      }
-    }, 350);
+            const currentPosition = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+            });
 
-    return () => {
-      cancelled = true;
-      clearTimeout(timeoutId);
+            let label = "";
+
+            try {
+                label = await reverseGeocodeCoords(
+                    currentPosition.coords.latitude,
+                    currentPosition.coords.longitude
+                );
+            } catch (reverseError) {
+                console.warn(reverseError);
+            }
+
+            if (!label) {
+                const [reverseGeocoded] = await Location.reverseGeocodeAsync({
+                    latitude: currentPosition.coords.latitude,
+                    longitude: currentPosition.coords.longitude,
+                });
+
+                label =
+                buildLocationLabel(reverseGeocoded) ||
+                    `${currentPosition.coords.latitude.toFixed(5)}, ${currentPosition.coords.longitude.toFixed(5)}`;
+            }
+
+            setLocationQuery(label);
+            setSelectedLocation({
+                id: -1, // special ID when device location used
+                label,
+                latitude: currentPosition.coords.latitude,
+                longitude: currentPosition.coords.longitude,
+                source: "device",
+            });
+            updateMapRegion(currentPosition.coords.latitude, currentPosition.coords.longitude);
+            setShowMap(true);
+            setLocationResults([]);
+        } catch (error) {
+            console.warn(error);
+            Alert.alert("Location error", "We couldn't get your current location.");
+        } finally {
+            setIsFetchingLocation(false);
+        }
     };
-  }, [locationQuery, selectedLocation]);
-
-  const resolveTypedLocation = async () => {
-    const trimmedQuery = locationQuery.trim();
-    if (!trimmedQuery) return null;
-
-    const matches = await Location.geocodeAsync(trimmedQuery);
-    if (!matches.length) {
-      return null;
-    }
-
-    return {
-      label: trimmedQuery,
-      latitude: matches[0].latitude,
-      longitude: matches[0].longitude,
-      source: "typed",
-    };
-  };
-
-  const useCurrentLocation = async () => {
-    setIsFetchingLocation(true);
-
-    try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Permission needed", "Please allow location access to use your current location.");
-        return;
-      }
-
-      const currentPosition = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      let label = "";
-
-      try {
-        label = await reverseGeocodeCoords(
-          currentPosition.coords.latitude,
-          currentPosition.coords.longitude
-        );
-      } catch (reverseError) {
-        console.warn(reverseError);
-      }
-
-      if (!label) {
-        const [reverseGeocoded] = await Location.reverseGeocodeAsync({
-          latitude: currentPosition.coords.latitude,
-          longitude: currentPosition.coords.longitude,
-        });
-
-        label =
-          buildLocationLabel(reverseGeocoded) ||
-          `${currentPosition.coords.latitude.toFixed(5)}, ${currentPosition.coords.longitude.toFixed(5)}`;
-      }
-
-      setLocationQuery(label);
-      setSelectedLocation({
-        id: -1, // special ID when device location used
-        label,
-        latitude: currentPosition.coords.latitude,
-        longitude: currentPosition.coords.longitude,
-        source: "device",
-      });
-      updateMapRegion(currentPosition.coords.latitude, currentPosition.coords.longitude);
-      setShowMap(true);
-      setLocationResults([]);
-    } catch (error) {
-      console.warn(error);
-      Alert.alert("Location error", "We couldn't get your current location.");
-    } finally {
-      setIsFetchingLocation(false);
-    }
-  };
 
     const chooseLocation = (itemId) => {
         if (typeof(itemId) === 'function') {
@@ -320,61 +318,61 @@ export default function CustomerCreateRequestScreen({ route }) {
         setLocationResults([item]); // keep item in dropdown so preview works correctly
     };
 
-const submit = async () => {
-    if (!userUid) return;
+    const submit = async () => {
+        if (!userUid) return;
 
-    if (!serviceType.trim() || !description.trim() || !locationQuery.trim() || !availabilityText.trim()) {
-      Alert.alert("Missing info", "Please fill in all fields.");
-      return;
-    }
+        if (!serviceType.trim() || !description.trim() || !locationQuery.trim() || !availabilityText.trim()) {
+            Alert.alert("Missing info", "Please fill in all fields.");
+            return;
+        }
 
-    try {
-      setIsSubmitting(true);
+        try {
+            setIsSubmitting(true);
 
-      const resolvedLocation = selectedLocation ?? (await resolveTypedLocation());
-      if (!resolvedLocation) {
-        Alert.alert(
-          "Location needed",
-          "Use your current location or choose a suggested place so we can locate the request."
-        );
-        return;
-      }
+            const resolvedLocation = selectedLocation ?? (await resolveTypedLocation());
+            if (!resolvedLocation) {
+                Alert.alert(
+                    "Location needed",
+                    "Use your current location or choose a suggested place so we can locate the request."
+                );
+                return;
+            }
 
-      const { requestId } = route.params;
+            const { requestId } = route.params;
 
-      const docRef = doc(db, 'requests', requestId);
-      const requestData = {
-        customerUid: userUid,
-        customerName: userName ?? "Customer",
-        serviceType: serviceType.trim(),
-        description: description.trim(),
-        locationText: resolvedLocation.label,
-        locationCoords: {
-          latitude: resolvedLocation.latitude,
-          longitude: resolvedLocation.longitude,
-        },
-        locationSource: resolvedLocation.source,
-        availabilityText: availabilityText.trim(),
-        status: "open",
-        acceptedByUid: null,
-        acceptedByName: null,
-        createdAt: Timestamp.now(),
-      };
-      if (request == null) {
-        await setDoc(docRef, { ...requestData, createdAt: Timestamp.now() });
-      } else {
-        await updateDoc(docRef, requestData);
-      }
+            const docRef = doc(db, 'requests', requestId);
+            const requestData = {
+                customerUid: userUid,
+                customerName: userName ?? "Customer",
+                serviceType: serviceType.trim(),
+                description: description.trim(),
+                locationText: resolvedLocation.label,
+                locationCoords: {
+                    latitude: resolvedLocation.latitude,
+                    longitude: resolvedLocation.longitude,
+                },
+                locationSource: resolvedLocation.source,
+                availabilityText: availabilityText.trim(),
+                status: "open",
+                acceptedByUid: null,
+                acceptedByName: null,
+                createdAt: Timestamp.now(),
+            };
+            if (request == null) {
+                await setDoc(docRef, { ...requestData, createdAt: Timestamp.now() });
+            } else {
+                await updateDoc(docRef, requestData);
+            }
 
-      navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
+            navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
 
-    } catch (e) {
-      console.warn(e);
-      Alert.alert("Error", e.message || "Could not submit request.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+        } catch (e) {
+            console.warn(e);
+            Alert.alert("Error", e.message || "Could not submit request.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     // render the detailing type dropdown
     const renderDetailingTypeDropdownPicker = () => {
