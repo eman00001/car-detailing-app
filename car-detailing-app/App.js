@@ -16,6 +16,7 @@ import DetailerDashboardScreen from './src/screens/detailer/DetailerDashboardScr
 import DetailerJobsScreen from './src/screens/detailer/DetailerJobsScreen';
 import CustomerDashboardScreen from './src/screens/customer/CustomerDashboardScreen';
 import CustomerCreateRequestScreen from './src/screens/customer/CustomerCreateRequestScreen';
+import CustomerTakePhotoScreen from './src/screens/customer/CustomerTakePhotoScreen';
 import ChatsListScreen from './src/screens/chat/ChatsListScreen';
 import ChatMessagesScreen from './src/screens/chat/ChatMessagesScreen';
 import ErrorScreen from './src/screens/ErrorScreen';
@@ -191,6 +192,12 @@ export default function App() {
                         screen: CarDetailsFormScreen,
                         options: {
                             title: 'Car Details',
+                        },
+                    },
+                    TakePhoto: {
+                        screen: CustomerTakePhotoScreen,
+                        options: {
+                            title: 'Take Photo',
                         },
                     },
                     ConfirmRequest: {

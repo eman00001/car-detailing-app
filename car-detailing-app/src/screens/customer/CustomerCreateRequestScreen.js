@@ -1,16 +1,57 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, TextInput, Pressable, Alert, KeyboardAvoidingView, ScrollView } from "react-native";
+import { View, Text, TextInput, Pressable, Alert, FlatList, ActivityIndicator, Image, KeyboardAvoidingView, ScrollView } from "react-native";
 import { useState, useEffect } from "react";
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useNavigation } from "@react-navigation/native";
 import { useHeaderHeight } from '@react-navigation/elements';
 import { doc, collection, Timestamp, query, orderBy, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import * as Location from "expo-location";
 import { db } from "../../firebaseConfig";
+import LocationPreviewMap from "../../components/LocationPreviewMap";
+import { uploadImageToCloudinary } from "../../imageUploadUtils";
 import LoadingScreen from "../LoadingScreen";
 import styles from "../../stylesheet";
 import ErrorScreen from "../ErrorScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomerRequestStepIndicator from "./CustomerRequestStepIndicator";
+import { useNavigation } from "@react-navigation/native";
+
+function buildLocationLabel(parts) {
+    if (!parts) return "";
+
+    const segments = [
+        parts.name,
+        parts.street,
+        parts.city || parts.district || parts.subregion,
+        parts.region,
+        parts.postalCode,
+        parts.country,
+    ].filter(Boolean);
+
+    return [...new Set(segments)].join(", ");
+}
+
+async function reverseGeocodeCoords(latitude, longitude) {
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${
+        encodeURIComponent(latitude)
+    }&lon=${
+        encodeURIComponent(longitude)
+    }`,
+    {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "en",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Reverse geocoding failed with status ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.display_name || "";
+}
 
 export default function CustomerCreateRequestScreen({ route }) {
     const navigation = useNavigation();
@@ -33,8 +74,24 @@ export default function CustomerCreateRequestScreen({ route }) {
 
     const [serviceType, setServiceType] = useState("");
     const [description, setDescription] = useState("");
-    const [locationText, setLocationText] = useState("");
-    const [preferredTime, setPreferredTime] = useState("");
+    const [locationQuery, setLocationQuery] = useState("");
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [locationResults, setLocationResults] = useState([]);
+    const [availabilityText, setAvailabilityText] = useState("");
+    const [isSearching, setIsSearching] = useState(false);
+    const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showMap, setShowMap] = useState(false);
+    const [mapRegion, setMapRegion] = useState(null);
+
+    const updateMapRegion = (latitude, longitude) => {
+        setMapRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        });
+    };
 
     // get user ID from async storage
     useEffect(() => {
@@ -74,6 +131,12 @@ export default function CustomerCreateRequestScreen({ route }) {
                 if (request.description) setDescription(request.description);
                 if (request.locationText) setLocationText(request.locationText);
                 if (request.preferredTime) setPreferredTime(request.preferredTime);
+                if (request.selectedLocation) {
+                    setSelectedLocation(request.selectedLocation);
+                    updateMapRegion(draft.selectedLocation.latitude, draft.selectedLocation.longitude);
+                    setShowMap(true); // show map if location is set
+                }
+                if (request.availabilityText) setAvailabilityText(request.availabilityText);
             } else {
                 setRequest(null);
             }
@@ -94,44 +157,209 @@ export default function CustomerCreateRequestScreen({ route }) {
         return unsubscribe;
     }, []);
 
-    const submit = async () => {
-        if (!userUid) return;
+  useEffect(() => {
+    const trimmedQuery = locationQuery.trim();
 
-        if (!serviceType.trim() || !description.trim() || !locationText.trim() || !preferredTime.trim()) {
-            Alert.alert("Missing info", "Please fill in all fields.");
-            return;
+    if (!trimmedQuery || trimmedQuery.length < 3) {
+      setLocationResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    if (selectedLocation?.label === trimmedQuery) {
+      setLocationResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(
+            trimmedQuery
+          )}`,
+          {
+            headers: {
+              Accept: "application/json",
+              "Accept-Language": "en",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Search failed with status ${response.status}`);
         }
 
-        const { requestId } = route.params; // must be defined to reach here
-        const docRef = doc(db, 'requests', requestId);
-        const requestData = {
-            customerUid: userUid,
-            customerName: userName ?? "Customer",
-            serviceType: serviceType.trim(),
-            description: description.trim(),
-            locationText: locationText.trim(),
-            preferredTime: preferredTime.trim(),
-            status: "draft",
-            acceptedByUid: null,
-            acceptedByName: null,
-            updatedAt: Timestamp.now(),
-        };
-        try {
-            // if no existing request, add new request to database
-            if (request == null) {
-                await setDoc(docRef, { ...requestData, createdAt: Timestamp.now() }); // also record when created
-            // if existing request, update the data values
-            } else {
-                await updateDoc(docRef, requestData);
-            }
-
-            navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
-
-        } catch (e) {
-            console.warn(e);
-            Alert.alert("Error", "Could not submit request.");
+        const results = await response.json();
+        if (!cancelled) {
+          setLocationResults(
+            results.map((item) => ({
+              id: `${item.place_id}`,
+              label: item.display_name,
+              latitude: Number(item.lat),
+              longitude: Number(item.lon),
+            }))
+          );
         }
+      } catch (error) {
+        console.warn(error);
+        if (!cancelled) {
+          setLocationResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsSearching(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
     };
+  }, [locationQuery, selectedLocation]);
+
+  const resolveTypedLocation = async () => {
+    const trimmedQuery = locationQuery.trim();
+    if (!trimmedQuery) return null;
+
+    const matches = await Location.geocodeAsync(trimmedQuery);
+    if (!matches.length) {
+      return null;
+    }
+
+    return {
+      label: trimmedQuery,
+      latitude: matches[0].latitude,
+      longitude: matches[0].longitude,
+      source: "typed",
+    };
+  };
+
+  const useCurrentLocation = async () => {
+    setIsFetchingLocation(true);
+
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Permission needed", "Please allow location access to use your current location.");
+        return;
+      }
+
+      const currentPosition = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      let label = "";
+
+      try {
+        label = await reverseGeocodeCoords(
+          currentPosition.coords.latitude,
+          currentPosition.coords.longitude
+        );
+      } catch (reverseError) {
+        console.warn(reverseError);
+      }
+
+      if (!label) {
+        const [reverseGeocoded] = await Location.reverseGeocodeAsync({
+          latitude: currentPosition.coords.latitude,
+          longitude: currentPosition.coords.longitude,
+        });
+
+        label =
+          buildLocationLabel(reverseGeocoded) ||
+          `${currentPosition.coords.latitude.toFixed(5)}, ${currentPosition.coords.longitude.toFixed(5)}`;
+      }
+
+      setLocationQuery(label);
+      setSelectedLocation({
+        label,
+        latitude: currentPosition.coords.latitude,
+        longitude: currentPosition.coords.longitude,
+        source: "device",
+      });
+      updateMapRegion(currentPosition.coords.latitude, currentPosition.coords.longitude);
+      setShowMap(true);
+      setLocationResults([]);
+    } catch (error) {
+      console.warn(error);
+      Alert.alert("Location error", "We couldn't get your current location.");
+    } finally {
+      setIsFetchingLocation(false);
+    }
+  };
+
+  const chooseLocation = (item) => {
+    setLocationQuery(item.label);
+    setSelectedLocation({
+      label: item.label,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      source: "autocomplete",
+    });
+    updateMapRegion(item.latitude, item.longitude);
+    setShowMap(true);
+    setLocationResults([]);
+  };
+
+const submit = async () => {
+    if (!userUid) return;
+
+    if (!serviceType.trim() || !description.trim() || !locationQuery.trim() || !availabilityText.trim()) {
+      Alert.alert("Missing info", "Please fill in all fields.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const resolvedLocation = selectedLocation ?? (await resolveTypedLocation());
+      if (!resolvedLocation) {
+        Alert.alert(
+          "Location needed",
+          "Use your current location or choose a suggested place so we can locate the request."
+        );
+        return;
+      }
+
+      const { requestId } = route.params;
+
+      const docRef = doc(db, 'requests', requestId);
+      const requestData = {
+        customerUid: userUid,
+        customerName: userName ?? "Customer",
+        serviceType: serviceType.trim(),
+        description: description.trim(),
+        locationText: resolvedLocation.label,
+        locationCoords: {
+          latitude: resolvedLocation.latitude,
+          longitude: resolvedLocation.longitude,
+        },
+        locationSource: resolvedLocation.source,
+        availabilityText: availabilityText.trim(),
+        status: "open",
+        acceptedByUid: null,
+        acceptedByName: null,
+        createdAt: Timestamp.now(),
+      };
+      if (request == null) {
+        await setDoc(docRef, { ...requestData, createdAt: Timestamp.now() });
+      } else {
+        await updateDoc(docRef, requestData);
+      }
+
+      navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
+
+    } catch (e) {
+      console.warn(e);
+      Alert.alert("Error", e.message || "Could not submit request.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
     // render the detailing type dropdown
     const renderDetailingTypeDropdownPicker = () => {
@@ -197,22 +425,97 @@ export default function CustomerCreateRequestScreen({ route }) {
                     />
 
                     <Text style={styles.inputLabel}>Location</Text>
+                    <Pressable
+                        onPress={useCurrentLocation}
+                        disabled={isFetchingLocation}
+                        style={{
+                            ...styles.button,
+                            ...styles.buttonPlain,
+                            opacity: isFetchingLocation ? 0.7 : 1,
+                        }}
+                    >
+                        {isFetchingLocation ? (
+                            <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 10 }}>
+                                <ActivityIndicator />
+                                <Text style={styles.buttonText}>Getting Current Location...</Text>
+                            </View>
+                        ) : (
+                            <Text style={styles.buttonText}>Use Current Location</Text>
+                        )}
+                    </Pressable>
+
                     <TextInput
-                        value={locationText}
-                        onChangeText={setLocationText}
-                        placeholder="Address or area"
+                        value={locationQuery}
+                        onChangeText={(text) => {
+                            setLocationQuery(text);
+                            setSelectedLocation((currentSelection) =>
+                                currentSelection?.label === text ? currentSelection : null);
+                        }}
+                        placeholder="Search an address or area"
                         style={styles.textInput}
                     />
+                    <Text style={{ color: "#444" }}>
+                        Start typing for suggestions, or tap the button above to use your current location.
+                    </Text>
 
-                    <Text style={styles.inputLabel}>Preferred Time</Text>
+                    {isSearching ? <Text>Searching places...</Text> : null}
+
+                    {locationResults.length > 0 && (
+                        <FlatList
+                            data={locationResults}
+                            keyExtractor={(item) => item.id}
+                            keyboardShouldPersistTaps="handled"
+                            style={{ maxHeight: 180, borderWidth: 1, borderRadius: 5 }}
+                            renderItem={({ item }) => (
+                                <Pressable
+                                    onPress={() => chooseLocation(item)}
+                                    style={{ paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderColor: "#DDD" }}
+                                >
+                                    <Text>{item.label}</Text>
+                                </Pressable>
+                            )}
+                        />
+                    )}
+
+                    {selectedLocation && (
+                        <Pressable
+                            onPress={() => setShowMap((current) => !current)}
+                            style={{ ...styles.button, ...styles.buttonPlain }}
+                        >
+                            <Text style={styles.buttonText}>{showMap ? "Hide Map" : "Show Map"}</Text>
+                        </Pressable>
+                    )}
+
+                    {showMap && mapRegion && (
+                        <View>
+                            <Text style={styles.inputLabel}>Map Preview</Text>
+                            <LocationPreviewMap
+                                region={mapRegion}
+                                latitude={selectedLocation.latitude}
+                                longitude={selectedLocation.longitude}
+                                label={selectedLocation.label}
+                                onRegionChangeComplete={setMapRegion}
+                            />
+                        </View>
+                    )}
+
+                    <Text style={styles.inputLabel}>When are you available?</Text>
                     <TextInput
-                        value={preferredTime}
-                        onChangeText={setPreferredTime}
+                        value={availabilityText}
+                        onChangeText={setAvailabilityText}
                         placeholder="Weekend afternoon, etc."
                         style={styles.textInput}
                     />
 
-                    <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
+                    <Pressable
+                        onPress={submit}
+                        disabled={isSubmitting}
+                        style={{
+                            ...styles.button,
+                            ...styles.buttonPlain,
+                            opacity: isSubmitting ? 0.7 : 1,
+                        }}
+                    >
                         <Text style={styles.buttonText}>Submit</Text>
                     </Pressable>
                 </ScrollView>

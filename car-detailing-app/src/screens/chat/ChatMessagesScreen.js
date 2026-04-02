@@ -53,7 +53,7 @@ export default function ChatMessagesScreen({ route }) {
     // get chat messages, listening to realtime changes
     useEffect(() => {
         if (userUid == null) return; // wait until user ID found
-        
+
         setLoading(true); // begin loading when querying for messages
 
         // query messages for chat specified by Chat ID passed on route params, order in order sent

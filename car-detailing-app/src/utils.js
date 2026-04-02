@@ -53,7 +53,7 @@ export function formatDateTime(dateTime) {
     // if dateTime is within week, set day string to day of week of date
     } else if (isWithinWeek(dateTime, today)) {
         dayString = DAYS_OF_WEEK[dateTime.getDay()];
-    
+
     // if dateTime has same year as now, don't include in formatted date
     } else if (dateTime.getFullYear() === today.getFullYear()) {
         dayString = dateTime.toLocaleDateString('en-us', {

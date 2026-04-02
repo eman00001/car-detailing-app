@@ -38,7 +38,7 @@ export default function RegisterScreen() {
         try {
             const response = await createUserWithEmailAndPassword(firebase_auth, email, password);
             const docRef = doc(db, 'users', response.uid); // store user's name in Firestore
-            await setDoc(docRef, { name }); 
+            await setDoc(docRef, { name });
             // loading finishes when App.js handles auth, so do not change here
         } catch (error) {
             console.warn(error);

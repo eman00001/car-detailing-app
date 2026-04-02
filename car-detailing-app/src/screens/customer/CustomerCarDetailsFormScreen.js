@@ -366,7 +366,7 @@ export default function CarDetailsFormScreen({ route }) {
                 carInteriorColorRgb: selectedCarInteriorColor?.rgb ?? null,
                 estimatedCost: estimatedCost ?? null,
             });
-            navigation.navigate('ConfirmRequest', { requestId: request.id }); // last step, so confirm request
+            navigation.navigate('TakePhoto', { requestId: request.id }); // go to next step, which is take photo of car
         } catch (e) {
             console.error(e);
         }
