@@ -15,11 +15,16 @@ import LogOutScreen from './src/screens/auth/LogOutScreen';
 import DetailerDashboardScreen from './src/screens/detailer/DetailerDashboardScreen';
 import DetailerJobsScreen from './src/screens/detailer/DetailerJobsScreen';
 import CustomerDashboardScreen from './src/screens/customer/CustomerDashboardScreen';
+import CustomerCreateRequestScreen from './src/screens/customer/CustomerCreateRequestScreen';
+import CustomerTakePhotoScreen from './src/screens/customer/CustomerTakePhotoScreen';
 import ChatsListScreen from './src/screens/chat/ChatsListScreen';
 import ChatMessagesScreen from './src/screens/chat/ChatMessagesScreen';
 import ErrorScreen from './src/screens/ErrorScreen';
 import LoadingScreen from './src/screens/LoadingScreen';
 import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScreen';
+import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
+import CustomerRequestConfirmScreen from './src/screens/customer/CustomerRequestConfirmScreen';
+import SuccessTransitionScreen from './src/screens/SuccessTransitionScreen';
 
 export default function App() {
     const [loading, setLoading] = useState(true);
@@ -99,8 +104,6 @@ export default function App() {
             },
         })
 
-        
-
         if (isDetailer) {
             const TabNavigator = createBottomTabNavigator({
                 initialRouteName: 'DetailerDashboard',
@@ -169,7 +172,50 @@ export default function App() {
                     },
                 },
             });
-            Navigation = createStaticNavigation(TabNavigator);
+            const CreateRequestStack = createNativeStackNavigator({
+                initialRouteName: 'Home',
+                screens: {
+                    Home: {
+                        screen: TabNavigator,
+                        options: {
+                            title: 'Home',
+                            headerShown: false,
+                        },
+                    },
+                    CreateRequest: {
+                        screen: CustomerCreateRequestScreen,
+                        options: {
+                            title: 'Create Request',
+                        },
+                    },
+                    CarDetailsForm: {
+                        screen: CarDetailsFormScreen,
+                        options: {
+                            title: 'Car Details',
+                        },
+                    },
+                    TakePhoto: {
+                        screen: CustomerTakePhotoScreen,
+                        options: {
+                            title: 'Take Photo',
+                        },
+                    },
+                    ConfirmRequest: {
+                        screen: CustomerRequestConfirmScreen,
+                        options: {
+                            title: 'Confirm Request',
+                        },
+                    },
+                    SuccessTransition: {
+                        screen: SuccessTransitionScreen,
+                        options: {
+                            title: 'Success!',
+                            headerShown: false,
+                        }
+                    }
+                },
+            });
+            Navigation = createStaticNavigation(CreateRequestStack);
         }
 
     } else {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Pressable, FlatList } from 'react-native'
+import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,6 +10,8 @@ import { useNavigation } from '@react-navigation/native';
 
 import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
+
+import styles from '../../stylesheet';
 
 export default function ChatsListScreen() {
     const [loading, setLoading] = useState(true);
@@ -100,20 +102,48 @@ export default function ChatsListScreen() {
     }
 
     return (
-        <SafeAreaView>
+        <SafeAreaView style={styles.container}>
             <FlatList
                 data={chats}
-                renderItem={({ item }) => (
+                renderItem={({ item, index }) => (<>
+                    {index !== 0 && <View style={chatsListStyles.itemSeparator}></View>}
                     <Pressable
                         onPress={() => handlePressChat(item)}
                     >
-                        <View>
-                            <Text>{item.chatName}</Text>
+                        <View style={chatsListStyles.listItem}>
+                            <View style={chatsListStyles.itemIcon} />
+                            <Text style={chatsListStyles.itemText}>{item.chatName}</Text>
                         </View>
                     </Pressable>
-                )}
+                </>)}
+                contentContainerStyle={styles.listContainer}
                 keyExtractor={item => item.id}
             />
         </SafeAreaView>
     )
 }
+
+const chatsListStyles = StyleSheet.create({
+    listItem: {
+        flexDirection: 'row',
+        paddingInline: 12,
+        gap: 12,
+        alignItems: 'center',
+    },
+    itemIcon: {
+        width: 50,
+        height: 50,
+        backgroundColor: '#777',
+        borderRadius: '50%',
+    },
+    itemText: {
+        fontSize: 18,
+        fontWeight: 700,
+    },
+    itemSeparator: {
+        borderColor: '#DDD',
+        borderTopWidth: 0.5,
+        marginInline: 12,
+        paddingTop: 12,
+    }
+});

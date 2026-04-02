@@ -33,14 +33,14 @@ export default function DetailerDashboardScreen() {
     const renderItem = ({ item }) => (
     <View style={styles.card}>
         <View style={styles.left}>
-            <Text style={styles.service}>{item.service}</Text>
-            <Text style={styles.vehicle}>{item.vehicle}</Text>
-            <Text style={styles.date}>{item.date}</Text>
+            <Text style={styles.service}>{item.serviceType}</Text>
+            <Text style={styles.vehicle}>Vehicle</Text>
+            <Text style={styles.date}>{item.preferredTime}</Text>
         </View>
 
         <View style={styles.right}>
-            { item.status == 'pending' ?  <Pressable style={styles.button}><Text>Accept</Text></Pressable>: null}
-            { item.status == 'upcoming' ?  <Text style={[styles.status, statusColors[item.status]]}>{item.status.toUpperCase()}</Text>: null}
+            { item.status == 'open' ?  <Pressable style={styles.button}><Text>Accept</Text></Pressable>: null}
+            { item.status == 'accepted' ?  <Text style={[styles.status, statusColors[item.status]]}>{item.status.toUpperCase()}</Text>: null}
         </View>
     </View>
     );
@@ -65,7 +65,7 @@ export default function DetailerDashboardScreen() {
         const q = query(
             collection(db, "requests"),
             or(
-                where("status", "==", "pending"),
+                where("status", "==", "open"),
                 where("detailerId", "==", userUid)
             )
         );
@@ -165,7 +165,7 @@ export default function DetailerDashboardScreen() {
                 />
             </View>
             {/* <Pressable
-                style={{...styles.button, ...(isLoading ? styles.buttonDisabled : styles.buttonPlain)}}
+                style={[styles.button, isLoading ? styles.buttonDisabled : styles.buttonPlain]}
                 onPress={() => navigation.navigate('ChatMessages')}
                 >
                 <Text style={styles.buttonText}>View on Map</Text>
