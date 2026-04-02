@@ -14,7 +14,21 @@ import DetailerDashboardScreen from './src/screens/detailer/DetailerDashboardScr
 import DetailerJobsScreen from './src/screens/detailer/DetailerJobsScreen';
 import CustomerDashboardScreen from './src/screens/customer/CustomerDashboardScreen';
 import CustomerCreateRequestScreen from './src/screens/customer/CustomerCreateRequestScreen';
+import CustomerTakePhotoScreen from './src/screens/customer/CustomerTakePhotoScreen';
 import ChatScreen from './src/screens/chat/ChatScreen';
+
+function CustomerTabs() {
+    const Tab = createBottomTabNavigator();
+
+    return (
+        <Tab.Navigator initialRouteName="Customer Dashboard">
+            <Tab.Screen name="Customer Dashboard" component={CustomerDashboardScreen} />
+            <Tab.Screen name="Customer Chat" component={ChatScreen} />
+            <Tab.Screen name="Log Out" component={LogOutScreen} />
+            <Tab.Screen name="Create Request" component={CustomerCreateRequestScreen} />
+        </Tab.Navigator>
+    );
+}
 
 export default function App() {
     const [isSignedIn, setIsSignedIn] = useState(false);
@@ -50,6 +64,7 @@ export default function App() {
     if (isSignedIn) {
         const Tab = createBottomTabNavigator();
         if (isDetailer) {
+            const Tab = createBottomTabNavigator();
             return (
                 <SafeAreaProvider>
                     <NavigationContainer>
@@ -63,15 +78,18 @@ export default function App() {
                 </SafeAreaProvider>
             );
         } else {
+            const Stack = createNativeStackNavigator();
             return (
                 <SafeAreaProvider>
                     <NavigationContainer>
-                        <Tab.Navigator initialRouteName="Customer Dashboard">
-                            <Tab.Screen name="Customer Dashboard" component={CustomerDashboardScreen} />
-                            <Tab.Screen name="Customer Chat" component={ChatScreen} />
-                            <Tab.Screen name="Log Out" component={LogOutScreen} />
-                            <Tab.Screen name="Create Request" component={CustomerCreateRequestScreen} />
-                        </Tab.Navigator>
+                        <Stack.Navigator>
+                            <Stack.Screen
+                                name="Customer Home"
+                                component={CustomerTabs}
+                                options={{ headerShown: false }}
+                            />
+                            <Stack.Screen name="Take Photo" component={CustomerTakePhotoScreen} />
+                        </Stack.Navigator>
                     </NavigationContainer>
                 </SafeAreaProvider>
             );

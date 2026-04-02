@@ -1,5 +1,5 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, Pressable, Alert } from "react-native";
+import { View, Text, FlatList, Pressable, Alert, Image } from "react-native";
 import { useEffect, useState } from "react";
 import { collection, doc, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { firebase_auth, db } from "../../firebaseConfig";
@@ -51,9 +51,16 @@ export default function DetailerDashboardScreen() {
             <View style={{ borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 10 }}>
               <Text style={{ fontSize: 18, fontWeight: "700" }}>{item.serviceType}</Text>
               <Text>Customer: {item.customerName}</Text>
+              {item.photoUrl ? (
+                <Image
+                  source={{ uri: item.photoUrl }}
+                  style={{ width: "100%", height: 180, borderRadius: 10, marginVertical: 10 }}
+                  resizeMode="cover"
+                />
+              ) : null}
               <Text numberOfLines={2}>{item.description}</Text>
               <Text>Location: {item.locationText}</Text>
-              <Text>Time: {item.preferredTime}</Text>
+              <Text>Availability: {item.availabilityText ?? item.preferredTime}</Text>
 
               <Pressable
                 onPress={() =>

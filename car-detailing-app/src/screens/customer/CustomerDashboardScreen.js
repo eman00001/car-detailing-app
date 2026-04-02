@@ -1,5 +1,5 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, Pressable, FlatList } from "react-native";
+import { View, Text, Pressable, FlatList, Image } from "react-native";
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { firebase_auth, db } from "../../firebaseConfig";
@@ -45,9 +45,16 @@ export default function CustomerDashboardScreen({ navigation }) {
           renderItem={({ item }) => (
             <View style={{ borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 10 }}>
               <Text style={{ fontSize: 18, fontWeight: "700" }}>{item.serviceType}</Text>
+              {item.photoUrl ? (
+                <Image
+                  source={{ uri: item.photoUrl }}
+                  style={{ width: "100%", height: 180, borderRadius: 10, marginVertical: 10 }}
+                  resizeMode="cover"
+                />
+              ) : null}
               <Text numberOfLines={2}>{item.description}</Text>
               <Text>Location: {item.locationText}</Text>
-              <Text>Time: {item.preferredTime}</Text>
+              <Text>Availability: {item.availabilityText ?? item.preferredTime}</Text>
               <Text style={{ fontWeight: "700" }}>Status: {item.status}</Text>
             </View>
           )}
