@@ -49,7 +49,7 @@ export default function CustomerRequestConfirmScreen({ route }) {
         const requestDoc = doc(db, 'requests', request.id);
         try {
             await updateDoc(requestDoc, { status: 'open' });
-            navigation.popToTop();
+            navigation.navigate('SuccessTransition');
         } catch (e) {
             console.error(e);
         }

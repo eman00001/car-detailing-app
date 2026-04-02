@@ -23,6 +23,7 @@ import LoadingScreen from './src/screens/LoadingScreen';
 import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScreen';
 import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
 import CustomerRequestConfirmScreen from './src/screens/customer/CustomerRequestConfirmScreen';
+import SuccessTransitionScreen from './src/screens/SuccessTransitionScreen';
 
 export default function App() {
     const [loading, setLoading] = useState(true);
@@ -198,6 +199,13 @@ export default function App() {
                             title: 'Confirm Request',
                         },
                     },
+                    SuccessTransition: {
+                        screen: SuccessTransitionScreen,
+                        options: {
+                            title: 'Success!',
+                            headerShown: false,
+                        }
+                    }
                 },
             });
             Navigation = createStaticNavigation(CreateRequestStack);
