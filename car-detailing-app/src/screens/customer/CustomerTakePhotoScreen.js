@@ -8,6 +8,7 @@ import LoadingScreen from "../LoadingScreen";
 import { uploadImages, CLOUDINARY_CUSTOMER_REQUEST_CAR_PHOTO_UPLOAD_PRESET } from "../../imageUploadUtils";
 import { db } from "../../firebaseConfig";
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import CustomerRequestStepIndicator from "./CustomerRequestStepIndicator";
 
 export default function CustomerTakePhotoScreen({ route }) {
     const navigation = useNavigation();
@@ -128,6 +129,8 @@ export default function CustomerTakePhotoScreen({ route }) {
     return (
         <SafeAreaView style={styles.container}>
             <View style={{ flex: 1, padding: 16, gap: 12 }}>
+                <CustomerRequestStepIndicator currentStep={3} />
+                
                 <Text style={{ fontSize: 22, fontWeight: "700" }}>Take Vehicle Photo</Text>
 
                 {capturedPhoto ? (
