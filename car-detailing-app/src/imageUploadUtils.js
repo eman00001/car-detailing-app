@@ -33,7 +33,6 @@ export async function uploadImages(imageURIs, uploadPreset) {
                 body: formData,
             });
             const data = await response.json();
-            console.log(uploadPreset, data);
             return data?.secure_url;
         })
     );

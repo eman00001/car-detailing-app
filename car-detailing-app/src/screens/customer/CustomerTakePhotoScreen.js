@@ -37,6 +37,7 @@ export default function CustomerTakePhotoScreen({ route }) {
             if (requestDocSnapshot.exists()) {
                 const request = { ...requestDocSnapshot.data(), id: requestDocSnapshot.id };
                 setRequest(request);
+                if (request.photoUrl) setCapturedPhoto({ uri: request.photoUrl, isExisting: true });
             } else {
                 setRequest(null);
             }
@@ -78,26 +79,30 @@ export default function CustomerTakePhotoScreen({ route }) {
     const usePhoto = async () => {
         if (!capturedPhoto?.uri) return;
 
-        let photoUrl = null;
+        // only upload photo if not existing
+        if (!capturedPhoto.isExisting) {
+            let photoUrl = null;
 
-        try {
-            ([photoUrl] = await uploadImages([capturedPhoto.uri], CLOUDINARY_CUSTOMER_REQUEST_CAR_PHOTO_UPLOAD_PRESET));
-            console.log(photoUrl);
-        } catch (photoError) {
-            console.warn(photoError);
-            Alert.alert("Photo upload failed", photoError.message);
-            return;
-        }
+            try {
+                ([photoUrl] = await uploadImages([capturedPhoto.uri], CLOUDINARY_CUSTOMER_REQUEST_CAR_PHOTO_UPLOAD_PRESET));
+            } catch (photoError) {
+                console.warn(photoError);
+                Alert.alert("Photo upload failed", photoError.message);
+                return;
+            }
 
-        const requestDoc = doc(db, 'requests', request.id);
-        try {
-            // add the URL to the captured photo to the database
-            await updateDoc(requestDoc, { photoUrl });
-            // navigation to the next screen, which is the request confirmation screen
-            navigation.navigate("ConfirmRequest", { requestId: request.id });
-        } catch (e) {
-            console.error(e);
+            const requestDoc = doc(db, 'requests', request.id);
+            try {
+                // add the URL to the captured photo to the database
+                await updateDoc(requestDoc, { photoUrl });
+            } catch (e) {
+                console.error(e);
+                return;
+            }
         }
+        
+        // navigation to the next screen, which is the request confirmation screen
+        navigation.navigate("ConfirmRequest", { requestId: request.id });
     };
 
     if (loading || !permission) {
