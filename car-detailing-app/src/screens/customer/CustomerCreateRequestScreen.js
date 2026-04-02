@@ -7,7 +7,6 @@ import { doc, collection, Timestamp, query, orderBy, onSnapshot, setDoc, updateD
 import * as Location from "expo-location";
 import { db } from "../../firebaseConfig";
 import LocationPreviewMap from "../../components/LocationPreviewMap";
-import { uploadImageToCloudinary } from "../../imageUploadUtils";
 import LoadingScreen from "../LoadingScreen";
 import styles from "../../stylesheet";
 import ErrorScreen from "../ErrorScreen";
@@ -74,9 +73,7 @@ export default function CustomerCreateRequestScreen({ route }) {
 
     const [serviceType, setServiceType] = useState("");
     const [description, setDescription] = useState("");
-    const [locationQuery, setLocationQuery] = useState("");
-    const [selectedLocation, setSelectedLocation] = useState(null);
-    const [locationResults, setLocationResults] = useState([]);
+
     const [availabilityText, setAvailabilityText] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [isFetchingLocation, setIsFetchingLocation] = useState(false);
@@ -84,6 +81,12 @@ export default function CustomerCreateRequestScreen({ route }) {
     const [showMap, setShowMap] = useState(false);
     const [mapRegion, setMapRegion] = useState(null);
 
+    const [locationQuery, setLocationQuery] = useState("");
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [locationResults, setLocationResults] = useState([]);
+    // stores whether the dropdown for the location autocomplete is currently open
+    const [isLocationAutocompleteDropdownOpen, setIsLocationAutocompleteDropdownOpen] = useState(false); // dropdown closed on default
+    
     const updateMapRegion = (latitude, longitude) => {
         setMapRegion({
             latitude,
@@ -161,13 +164,13 @@ export default function CustomerCreateRequestScreen({ route }) {
     const trimmedQuery = locationQuery.trim();
 
     if (!trimmedQuery || trimmedQuery.length < 3) {
-      setLocationResults([]);
+      setLocationResults(selectedLocation ? [selectedLocation] : []); // if query too short, show only current if selected
       setIsSearching(false);
       return;
     }
 
     if (selectedLocation?.label === trimmedQuery) {
-      setLocationResults([]);
+      setLocationResults([selectedLocation]); // so that selected location shows up in dropdown
       setIsSearching(false);
       return;
     }
@@ -177,7 +180,7 @@ export default function CustomerCreateRequestScreen({ route }) {
       setIsSearching(true);
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(
+          `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=20&q=${encodeURIComponent(
             trimmedQuery
           )}`,
           {
@@ -194,14 +197,22 @@ export default function CustomerCreateRequestScreen({ route }) {
 
         const results = await response.json();
         if (!cancelled) {
-          setLocationResults(
-            results.map((item) => ({
-              id: `${item.place_id}`,
-              label: item.display_name,
-              latitude: Number(item.lat),
-              longitude: Number(item.lon),
-            }))
-          );
+            const locationResults = results.map((item) => ({
+                id: `${item.place_id}`,
+                label: item.display_name,
+                latitude: Number(item.lat),
+                longitude: Number(item.lon),
+            }));
+            // add currently selected location to top of dropdown, removing if in search
+            if (selectedLocation != null) {
+                const selectedLocationIndex = locationResults.findIndex(location => location.id === selectedLocation.id);
+                if (selectedLocationIndex !== -1) {
+                    locationResults.splice(selectedLocationIndex, 1);
+                }
+                locationResults.unshift(selectedLocation); // add to start
+            }
+
+            setLocationResults(locationResults);
         }
       } catch (error) {
         console.warn(error);
@@ -276,6 +287,7 @@ export default function CustomerCreateRequestScreen({ route }) {
 
       setLocationQuery(label);
       setSelectedLocation({
+        id: -1, // special ID when device location used
         label,
         latitude: currentPosition.coords.latitude,
         longitude: currentPosition.coords.longitude,
@@ -292,18 +304,21 @@ export default function CustomerCreateRequestScreen({ route }) {
     }
   };
 
-  const chooseLocation = (item) => {
-    setLocationQuery(item.label);
-    setSelectedLocation({
-      label: item.label,
-      latitude: item.latitude,
-      longitude: item.longitude,
-      source: "autocomplete",
-    });
-    updateMapRegion(item.latitude, item.longitude);
-    setShowMap(true);
-    setLocationResults([]);
-  };
+    const chooseLocation = (itemId) => {
+        if (typeof(itemId) === 'function') {
+            itemId = itemId();
+        }
+        const item = locationResults.find(item => item.id === itemId);
+        if (item == null) return;
+        setLocationQuery(item.label);
+        setSelectedLocation({
+            ...item,
+            source: "autocomplete",
+        });
+        updateMapRegion(item.latitude, item.longitude);
+        setShowMap(true);
+        setLocationResults([item]); // keep item in dropdown so preview works correctly
+    };
 
 const submit = async () => {
     if (!userUid) return;
@@ -382,6 +397,43 @@ const submit = async () => {
         );
     };
 
+    const renderLocationAutocompleteDropdownPicker = () => {
+        return (
+            <View>
+                <DropDownPicker
+                    schema={{ label: 'label', value: 'id' }}
+                    listMode="MODAL"
+                    open={isLocationAutocompleteDropdownOpen}
+                    items={locationResults}
+                    value={selectedLocation?.id}
+                    searchable={true}
+                    disableLocalSearch={true}
+                    searchPlaceholder="Search..."
+                    placeholder="Search an address or area"
+                    setOpen={setIsLocationAutocompleteDropdownOpen}
+                    setValue={chooseLocation}
+                    onChangeSearchText={setLocationQuery}
+                    ListEmptyComponent={() => (
+                        <View style={styles.containerCentered}>
+                            {isSearching ? (
+                                <ActivityIndicator />
+                            ) : (
+                                <Text>There's nothing to show!</Text>
+                            )}
+                        </View>
+                    )}
+                    flatListProps={{
+                        ListHeaderComponent: (isSearching && locationResults.length > 0) ? (() => (
+                            <View style={styles.paddedContainer}>
+                                <ActivityIndicator />
+                            </View>
+                        )) : undefined,
+                    }}
+                />
+            </View>
+        )
+    }
+
     // show any errors if present
     if (errorMessage != null) {
         return <ErrorScreen errorMessage={errorMessage} />
@@ -444,38 +496,7 @@ const submit = async () => {
                         )}
                     </Pressable>
 
-                    <TextInput
-                        value={locationQuery}
-                        onChangeText={(text) => {
-                            setLocationQuery(text);
-                            setSelectedLocation((currentSelection) =>
-                                currentSelection?.label === text ? currentSelection : null);
-                        }}
-                        placeholder="Search an address or area"
-                        style={styles.textInput}
-                    />
-                    <Text style={{ color: "#444" }}>
-                        Start typing for suggestions, or tap the button above to use your current location.
-                    </Text>
-
-                    {isSearching ? <Text>Searching places...</Text> : null}
-
-                    {locationResults.length > 0 && (
-                        <FlatList
-                            data={locationResults}
-                            keyExtractor={(item) => item.id}
-                            keyboardShouldPersistTaps="handled"
-                            style={{ maxHeight: 180, borderWidth: 1, borderRadius: 5 }}
-                            renderItem={({ item }) => (
-                                <Pressable
-                                    onPress={() => chooseLocation(item)}
-                                    style={{ paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderColor: "#DDD" }}
-                                >
-                                    <Text>{item.label}</Text>
-                                </Pressable>
-                            )}
-                        />
-                    )}
+                    {renderLocationAutocompleteDropdownPicker()}
 
                     {selectedLocation && (
                         <Pressable
