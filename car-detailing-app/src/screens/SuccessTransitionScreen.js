@@ -2,18 +2,19 @@ import { useEffect } from 'react';
 import LottieView from 'lottie-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from '../stylesheet';
-import { useNavigation } from '@react-navigation/native';
 import { Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const ANIMATION_DURATION_MS = 2000; // success.lottie is a 2 second animation
 const ANIMATION_COLOR = '#64BBBD'; // the color of the animation, so text can be matched
 
-export default function SuccessTransitionScreen() {
+export default function SuccessTransitionScreen({ route }) {
     const navigation = useNavigation();
+    const { navigationScreen, navigationParams } = route.params;
 
-    // go to first screen in navigation once animation completes
+    // run return to specified screen once animation completes
     useEffect(() => {
-        setTimeout(navigation.popToTop, ANIMATION_DURATION_MS);
+        setTimeout(() => navigation.popTo(navigationScreen, navigationParams), ANIMATION_DURATION_MS);
     }, []);
 
     return (

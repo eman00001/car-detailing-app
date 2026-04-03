@@ -113,6 +113,11 @@ export default function CustomerTakePhotoScreen({ route }) {
         setIsSubmitting(false); // end submitting
     };
 
+    // if skip step, just go to next page
+    const skipStep = () => {
+        navigation.navigate("ConfirmRequest", { requestId: request.id });
+    }
+
     if (loading || !permission) {
         return <LoadingScreen />;
     }
@@ -151,7 +156,11 @@ export default function CustomerTakePhotoScreen({ route }) {
 
                         <Pressable
                             onPress={() => setCapturedPhoto(null)}
-                            style={[styles.button, styles.buttonPlain]}
+                            disabled={isSubmitting}
+                            style={[
+                                styles.button,
+                                styles.buttonPlain
+                            ]}
                         >
                             <Text style={styles.buttonText}>Retake Photo</Text>
                         </Pressable>
@@ -197,6 +206,16 @@ export default function CustomerTakePhotoScreen({ route }) {
                             ) : (
                                 <Text style={styles.buttonText}>Take Photo</Text>
                             )}
+                        </Pressable>
+                        <Pressable
+                            onPress={skipStep}
+                            disabled={!cameraReady || isCapturing}
+                            style={[
+                                styles.button,
+                                (!cameraReady || isCapturing) ? styles.buttonDisabled : styles.buttonPlain,
+                            ]}
+                        >
+                            <Text style={styles.buttonText}>Skip Step</Text>
                         </Pressable>
                     </>
                 )}

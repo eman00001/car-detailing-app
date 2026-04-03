@@ -27,6 +27,7 @@ import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScre
 import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
 import CustomerRequestConfirmScreen from './src/screens/customer/CustomerRequestConfirmScreen';
 import SuccessTransitionScreen from './src/screens/SuccessTransitionScreen';
+import CustomerRequestDraftsScreen from './src/screens/customer/CustomerRequestDraftsScreen';
 import { PRIMARY_TEXT_COLOR } from './src/stylesheet';
 
 const TAB_ICON_SIZE = 40;
@@ -176,6 +177,24 @@ export default function App() {
             Navigation = createStaticNavigation(TabNavigator);
 
         } else {
+            const CustomerRequestsStack = createNativeStackNavigator({
+                initialRouteName: 'AllRequests',
+                screens: {
+                    AllRequests: {
+                        screen: CustomerDashboardScreen,
+                        options: {
+                            title: 'All',
+                            headerShown: false,
+                        },
+                    },
+                    RequestDrafts: {
+                        screen: CustomerRequestDraftsScreen,
+                        options: {
+                            title: 'Request Drafts',
+                        }
+                    }
+                }
+            })
             const TabNavigator = createBottomTabNavigator({
                 initialRouteName: 'CustomerDashboard',
                 screenOptions: {
@@ -190,7 +209,7 @@ export default function App() {
                 },
                 screens: {
                     CustomerDashboard: {
-                        screen: CustomerDashboardScreen,
+                        screen: CustomerRequestsStack,
                         options: {
                             title: 'Customer Dashboard',
                             tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,

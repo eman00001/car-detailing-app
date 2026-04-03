@@ -41,6 +41,13 @@ export default StyleSheet.create({
     },
     listContainer: {
         gap: 12,
+        paddingInline: 6, // enough for scrollbar
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
     },
 
     // heading stylings
@@ -94,11 +101,21 @@ export default StyleSheet.create({
         borderRadius: 10,
         padding: 10,
     },
+    buttonSmall: {
+        borderRadius: 8,
+        padding: 8,
+    },
+    buttonStretch: {
+        flex: 1,
+    },
     buttonText: {
         color: '#FFF',
         fontSize: 20,
         fontWeight: 700,
         textAlign: 'center',
+    },
+    buttonTextSmall: {
+        fontSize: 15,
     },
     buttonPlain: {
         backgroundColor: PRIMARY_FILL_MUTED_COLOR,
@@ -109,10 +126,16 @@ export default StyleSheet.create({
     buttonDisabled: {
         backgroundColor: PRIMARY_DISABLED_COLOR,
     },
+
+    // space stylings
+    spaceBottom: {
+        marginBottom: 12,
+    },
     
     // link stylings
     linkText: {
         fontSize: 18,
+        marginBottom: 12,
         textDecorationLine: 'underline',
         color: PRIMARY_TEXT_COLOR,
     },

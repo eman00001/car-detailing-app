@@ -47,13 +47,22 @@ export default function CustomerRequestConfirmScreen({ route }) {
         return unsubscribe;
     }, []);
 
+    // request is already saved as draft, so just go to drafts scren
+    const saveAsDraft = () => {
+        // save as draft and go to drafts screen
+        navigation.popTo('Home', { screen: 'CustomerDashboard', params: { screen: 'RequestDrafts' }});
+    }
+
     // when submitting, change from status draft to open and return to dashboard
     const submit = async () => {
         setIsSubmitting(true); // begin submitting
         const requestDoc = doc(db, 'requests', request.id);
         try {
             await updateDoc(requestDoc, { status: 'open', createdAt: Timestamp.now() });
-            navigation.navigate('SuccessTransition');
+            navigation.navigate('SuccessTransition', {
+                navigationScreen: 'Home',
+                navigationParams: { screen: 'CustomerDashboard', params: { screen: 'AllRequests' } }
+            });
         } catch (e) {
             console.error(e);
         } finally {
@@ -98,16 +107,31 @@ export default function CustomerRequestConfirmScreen({ route }) {
                 {renderRequestData('Car Interior Color', request.carInteriorColor)}
                 {renderRequestData('Estimated Cost', formatterCAD.format(request.estimatedCost))}
 
-                <Pressable
-                    onPress={submit}
-                    disabled={isSubmitting}
-                    style={[
-                        styles.button,
-                        isSubmitting ? styles.buttonDisabled : styles.buttonPrimary
-                    ]}
-                >
-                    <Text style={styles.buttonText}>Submit</Text>
-                </Pressable>
+                <View style={styles.row}>
+
+                    <Pressable
+                        onPress={saveAsDraft}
+                        disabled={isSubmitting}
+                        style={[
+                            styles.button,
+                            styles.buttonStretch,
+                            isSubmitting ? styles.buttonDisabled : styles.buttonPlain
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>Save as Draft</Text>
+                    </Pressable>
+                    <Pressable
+                        onPress={submit}
+                        disabled={isSubmitting}
+                        style={[
+                            styles.button,
+                            styles.buttonStretch,
+                            isSubmitting ? styles.buttonDisabled : styles.buttonPrimary
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </Pressable>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );

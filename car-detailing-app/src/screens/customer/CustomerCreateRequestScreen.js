@@ -132,11 +132,15 @@ export default function CustomerCreateRequestScreen({ route }) {
                 // set form values based on existing request data
                 if (request.serviceType) setServiceType(request.serviceType);
                 if (request.description) setDescription(request.description);
-                if (request.locationText) setLocationText(request.locationText);
-                if (request.preferredTime) setPreferredTime(request.preferredTime);
-                if (request.selectedLocation) {
-                    setSelectedLocation(request.selectedLocation);
-                    updateMapRegion(draft.selectedLocation.latitude, draft.selectedLocation.longitude);
+                if (request.locationText) {
+                    setSelectedLocation({
+                        id: -1, // special ID,
+                        label: request.locationText,
+                        latitude: request.locationCoords.latitude,
+                        longitude: request.locationCoords.longitude,
+                        source: request.locationSource,
+                    });
+                    updateMapRegion(request.locationCoords.latitude, request.locationCoords.longitude);
                     setShowMap(true); // show map if location is set
                 }
                 if (request.availabilityText) setAvailabilityText(request.availabilityText);
@@ -318,10 +322,10 @@ export default function CustomerCreateRequestScreen({ route }) {
         setLocationResults([item]); // keep item in dropdown so preview works correctly
     };
 
-    const submit = async () => {
+    const submit = async (continueToNextStep) => {
         if (!userUid) return;
 
-        if (!serviceType.trim() || !description.trim() || !locationQuery.trim() || !availabilityText.trim()) {
+        if (!serviceType.trim() || !description.trim() || !selectedLocation?.label.trim() || !availabilityText.trim()) {
             Alert.alert("Missing info", "Please fill in all fields.");
             return;
         }
@@ -353,7 +357,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                 },
                 locationSource: resolvedLocation.source,
                 availabilityText: availabilityText.trim(),
-                status: "open",
+                status: "draft", // for now, there is still more info needed so is a draft
                 acceptedByUid: null,
                 acceptedByName: null,
                 updatedAt: Timestamp.now(),
@@ -364,7 +368,12 @@ export default function CustomerCreateRequestScreen({ route }) {
                 await updateDoc(docRef, requestData);
             }
 
-            navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
+            if (continueToNextStep) {
+                navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
+            } else {
+                // save as draft and go to drafts screen
+                navigation.popTo('Home', { screen: 'CustomerDashboard', params: { screen: 'RequestDrafts' }});
+            }
 
         } catch (e) {
             console.warn(e);
@@ -416,7 +425,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                             {isSearching ? (
                                 <ActivityIndicator />
                             ) : (
-                                <Text>There's nothing to show!</Text>
+                                <Text>Type a location in the search bar to see results</Text>
                             )}
                         </View>
                     )}
@@ -526,16 +535,30 @@ export default function CustomerCreateRequestScreen({ route }) {
                         style={styles.textInput}
                     />
 
-                    <Pressable
-                        onPress={submit}
-                        disabled={isSubmitting}
-                        style={[
-                            styles.button,
-                            isSubmitting ? styles.buttonDisabled : styles.buttonPrimary,
-                        ]}
-                    >
-                        <Text style={styles.buttonText}>Submit</Text>
-                    </Pressable>
+                    <View style={styles.row}>
+                        <Pressable
+                            onPress={() => submit(false)}
+                            disabled={isSubmitting}
+                            style={[
+                                styles.button,
+                                styles.buttonStretch,
+                                isSubmitting ? styles.buttonDisabled : styles.buttonPlain,
+                            ]}
+                        >
+                            <Text style={styles.buttonText}>Save as Draft</Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={() => submit(true)}
+                            disabled={isSubmitting}
+                            style={[
+                                styles.button,
+                                styles.buttonStretch,
+                                isSubmitting ? styles.buttonDisabled : styles.buttonPrimary,
+                            ]}
+                        >
+                            <Text style={styles.buttonText}>Submit</Text>
+                        </Pressable>
+                    </View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
