@@ -50,6 +50,7 @@ export default function CustomerRequestDraftsScreen() {
                 )}
                 requestsOrder={orderBy("updatedAt", "desc")}
                 onPressItem={onPressDraft}
+                showCustomerName={false}
             />
         </SafeAreaView>
     );

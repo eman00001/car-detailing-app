@@ -68,6 +68,7 @@ export default function CustomerDashboardScreen() {
                 )}
                 requestsOrder={orderBy("updatedAt", "desc")}
                 onPressItem={item => navigation.navigate('RequestDetails', { request: item })}
+                showCustomerName={false}
             />
             <Pressable
                 style={[styles.button, styles.buttonPrimary, { marginTop: 18 }]}

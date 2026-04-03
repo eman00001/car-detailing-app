@@ -12,7 +12,16 @@ import { statusColors } from '../constants';
 // snip description to a max of 40 characters long
 const DESCRIPTION_MAX_LENGTH = 40;
 
-export default function RequestsList({ userUid, requests, setRequests, requestsFilter, requestsOrder, onPressItem }) {
+export default function RequestsList({
+    userUid,
+    requests,
+    setRequests,
+    requestsFilter,
+    requestsOrder,
+    onPressItem,
+    showCustomerName = true
+}) {
+    
     const [isLoading, setLoading] = useState(true);
 
     // get requests from database
@@ -48,6 +57,7 @@ export default function RequestsList({ userUid, requests, setRequests, requestsF
             onPress={() => onPressItem?.(item)}
         >
             <View style={styles.left}>
+                {showCustomerName && <Text style={styles.h3}>{item.customerName}</Text>}
                 <Text style={styles.service}>{item.serviceType}</Text>
                 <Text style={styles.description}>{snippet(item.description, DESCRIPTION_MAX_LENGTH)}</Text>
                 {vehicle && <Text style={styles.vehicle}>{vehicle}</Text>}
@@ -74,6 +84,7 @@ export default function RequestsList({ userUid, requests, setRequests, requestsF
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContainer}
+                ListEmptyComponent={<Text>No requests yet</Text>}
             />
         </View>
     );
