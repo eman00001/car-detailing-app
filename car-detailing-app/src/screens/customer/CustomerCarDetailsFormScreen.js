@@ -93,6 +93,9 @@ export default function CarDetailsFormScreen({ route }) {
     // store user selections of car interior color
     const [selectedCarInteriorColor, setSelectedCarInteriorColor] = useState(null);
 
+    // store whether the submit button is being pressed
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     // create objects for each group of states so that easy to pass around
     const carMakesData = {
         id: 1,
@@ -354,6 +357,7 @@ export default function CarDetailsFormScreen({ route }) {
 
     // handle saving the selections to the request on submit
     const submit = async () => {
+        setIsSubmitting(true); // begin submitting
         const requestDoc = doc(db, 'requests', request.id);
         try {
             await updateDoc(requestDoc, {
@@ -369,6 +373,8 @@ export default function CarDetailsFormScreen({ route }) {
             navigation.navigate('TakePhoto', { requestId: request.id }); // go to next step, which is take photo of car
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -547,7 +553,14 @@ export default function CarDetailsFormScreen({ route }) {
                 {estimatedCost != null &&
                     renderFieldText(formatterCAD.format(estimatedCost), 'Estimated Cost')}
 
-                <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
+                <Pressable
+                    onPress={submit}
+                    disabled={isSubmitting}
+                    style={[
+                        styles.button,
+                        isSubmitting ? styles.buttonDisabled : styles.buttonPrimary
+                    ]}
+                >
                     <Text style={styles.buttonText}>Submit</Text>
                 </Pressable>
             </ScrollView>

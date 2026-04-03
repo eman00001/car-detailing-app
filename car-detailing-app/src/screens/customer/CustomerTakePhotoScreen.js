@@ -23,6 +23,7 @@ export default function CustomerTakePhotoScreen({ route }) {
     const [capturedPhoto, setCapturedPhoto] = useState(null);
     const [isCapturing, setIsCapturing] = useState(false);
     const [cameraReady, setCameraReady] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // handles getting the request from the database
     useEffect(() => {
@@ -80,6 +81,8 @@ export default function CustomerTakePhotoScreen({ route }) {
     const usePhoto = async () => {
         if (!capturedPhoto?.uri) return;
 
+        setIsSubmitting(true); // begin submitting
+
         // only upload photo if not existing
         if (!capturedPhoto.isExisting) {
             let photoUrl = null;
@@ -89,6 +92,7 @@ export default function CustomerTakePhotoScreen({ route }) {
             } catch (photoError) {
                 console.warn(photoError);
                 Alert.alert("Photo upload failed", photoError.message);
+                setIsSubmitting(false); // end submitting
                 return;
             }
 
@@ -98,12 +102,15 @@ export default function CustomerTakePhotoScreen({ route }) {
                 await updateDoc(requestDoc, { photoUrl });
             } catch (e) {
                 console.error(e);
+                setIsSubmitting(false); // end submitting
                 return;
             }
         }
         
         // navigation to the next screen, which is the request confirmation screen
         navigation.navigate("ConfirmRequest", { requestId: request.id });
+
+        setIsSubmitting(false); // end submitting
     };
 
     if (loading || !permission) {
@@ -118,7 +125,7 @@ export default function CustomerTakePhotoScreen({ route }) {
                     <Text style={{ textAlign: "center" }}>
                         Allow camera access so customers can take a photo of the vehicle before submitting a request.
                     </Text>
-                    <Pressable onPress={requestPermission} style={{ ...styles.button, ...styles.buttonPlain, width: "100%" }}>
+                    <Pressable onPress={requestPermission} style={[styles.button, styles.buttonPlain, { width: "100%" }]}>
                         <Text style={styles.buttonText}>Allow Camera Access</Text>
                     </Pressable>
                 </View>
@@ -144,12 +151,18 @@ export default function CustomerTakePhotoScreen({ route }) {
 
                         <Pressable
                             onPress={() => setCapturedPhoto(null)}
-                            style={{ ...styles.button, ...styles.buttonPlain }}
+                            style={[styles.button, styles.buttonPlain]}
                         >
                             <Text style={styles.buttonText}>Retake Photo</Text>
                         </Pressable>
 
-                        <Pressable onPress={usePhoto} style={{ ...styles.button, ...styles.buttonPlain }}>
+                        <Pressable
+                            onPress={usePhoto}
+                            disabled={isSubmitting}
+                            style={[
+                                styles.button,
+                                isSubmitting ? styles.buttonDisabled : styles.buttonPrimary
+                            ]}>
                             <Text style={styles.buttonText}>Use This Photo</Text>
                         </Pressable>
                     </>
@@ -171,11 +184,10 @@ export default function CustomerTakePhotoScreen({ route }) {
                         <Pressable
                             onPress={takePhoto}
                             disabled={!cameraReady || isCapturing}
-                            style={{
-                                ...styles.button,
-                                ...styles.buttonPlain,
-                                opacity: !cameraReady || isCapturing ? 0.7 : 1,
-                            }}
+                            style={[
+                                styles.button,
+                                (!cameraReady || isCapturing) ? styles.buttonDisabled : styles.buttonPrimary,
+                            ]}
                         >
                             {isCapturing ? (
                                 <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 10 }}>

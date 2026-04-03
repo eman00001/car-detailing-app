@@ -356,10 +356,10 @@ export default function CustomerCreateRequestScreen({ route }) {
                 status: "open",
                 acceptedByUid: null,
                 acceptedByName: null,
-                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
             };
             if (request == null) {
-                await setDoc(docRef, { ...requestData, createdAt: Timestamp.now() });
+                await setDoc(docRef, requestData);
             } else {
                 await updateDoc(docRef, requestData);
             }
@@ -478,11 +478,11 @@ export default function CustomerCreateRequestScreen({ route }) {
                     <Pressable
                         onPress={useCurrentLocation}
                         disabled={isFetchingLocation}
-                        style={{
-                            ...styles.button,
-                            ...styles.buttonPlain,
-                            opacity: isFetchingLocation ? 0.7 : 1,
-                        }}
+                        style={[
+                            styles.button,
+                            styles.buttonPlain,
+                            { opacity: isFetchingLocation ? 0.7 : 1 },
+                        ]}
                     >
                         {isFetchingLocation ? (
                             <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 10 }}>
@@ -499,7 +499,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                     {selectedLocation && (
                         <Pressable
                             onPress={() => setShowMap((current) => !current)}
-                            style={{ ...styles.button, ...styles.buttonPlain }}
+                            style={[styles.button, styles.buttonPlain]}
                         >
                             <Text style={styles.buttonText}>{showMap ? "Hide Map" : "Show Map"}</Text>
                         </Pressable>
@@ -529,11 +529,10 @@ export default function CustomerCreateRequestScreen({ route }) {
                     <Pressable
                         onPress={submit}
                         disabled={isSubmitting}
-                        style={{
-                            ...styles.button,
-                            ...styles.buttonPlain,
-                            opacity: isSubmitting ? 0.7 : 1,
-                        }}
+                        style={[
+                            styles.button,
+                            isSubmitting ? styles.buttonDisabled : styles.buttonPrimary,
+                        ]}
                     >
                         <Text style={styles.buttonText}>Submit</Text>
                     </Pressable>

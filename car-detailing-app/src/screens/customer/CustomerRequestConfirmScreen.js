@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { db } from '../../firebaseConfig';
-import {doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import {doc, onSnapshot, Timestamp, updateDoc } from 'firebase/firestore';
 
 import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
@@ -21,6 +21,9 @@ export default function CustomerRequestConfirmScreen({ route }) {
 
     // holds the request draft so far
     const [request, setRequest] = useState(null);
+
+    // true if the submit button has been pressed
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // handles getting the request from the database
     useEffect(() => {
@@ -46,12 +49,15 @@ export default function CustomerRequestConfirmScreen({ route }) {
 
     // when submitting, change from status draft to open and return to dashboard
     const submit = async () => {
+        setIsSubmitting(true); // begin submitting
         const requestDoc = doc(db, 'requests', request.id);
         try {
-            await updateDoc(requestDoc, { status: 'open' });
+            await updateDoc(requestDoc, { status: 'open', createdAt: Timestamp.now() });
             navigation.navigate('SuccessTransition');
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsSubmitting(false); // end submitting
         }
     }
 
@@ -92,7 +98,14 @@ export default function CustomerRequestConfirmScreen({ route }) {
                 {renderRequestData('Car Interior Color', request.carInteriorColor)}
                 {renderRequestData('Estimated Cost', formatterCAD.format(request.estimatedCost))}
 
-                <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
+                <Pressable
+                    onPress={submit}
+                    disabled={isSubmitting}
+                    style={[
+                        styles.button,
+                        isSubmitting ? styles.buttonDisabled : styles.buttonPrimary
+                    ]}
+                >
                     <Text style={styles.buttonText}>Submit</Text>
                 </Pressable>
             </ScrollView>

@@ -6,8 +6,9 @@ export const SECONDARY_FILL_LIGHT_COLOR = 'rgba(238, 223, 216, 1)';
 export const PRIMARY_COLOR = 'hsla(195, 100%, 71%, 1.00)';
 export const PRIMARY_BG_COLOR = 'hsla(193, 100%, 98%, 1.00)';
 export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(195, 77%, 90%, 1.00)';
-export const PRIMARY_FILL_DARK_COLOR = 'rgba(52, 171, 210, 1)';
-export const PRIMARY_BORDER_COLOR = 'hsla(196, 54%, 66%, 1.00)';
+export const PRIMARY_FILL_DARK_COLOR = 'rgba(8, 159, 210, 1)';
+export const PRIMARY_FILL_MUTED_COLOR = 'rgba(105, 164, 182, 1)';
+export const PRIMARY_BORDER_COLOR = 'hsla(196, 13%, 59%, 1.00)';
 export const PRIMARY_TEXT_COLOR = 'hsla(196, 100%, 23%, 1.00)';
 
 export default StyleSheet.create({
@@ -90,19 +91,20 @@ export default StyleSheet.create({
 
     // button stylings
     button: {
-        borderColor: PRIMARY_BORDER_COLOR,
-        borderWidth: 1,
         borderRadius: 10,
         padding: 10,
     },
     buttonText: {
-        color: PRIMARY_TEXT_COLOR,
+        color: '#FFF',
         fontSize: 20,
         fontWeight: 700,
         textAlign: 'center',
     },
     buttonPlain: {
-        backgroundColor: PRIMARY_FILL_LIGHT_COLOR,
+        backgroundColor: PRIMARY_FILL_MUTED_COLOR,
+    },
+    buttonPrimary: {
+        backgroundColor: PRIMARY_FILL_DARK_COLOR,
     },
     buttonDisabled: {
         backgroundColor: PRIMARY_BORDER_COLOR,
