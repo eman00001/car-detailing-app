@@ -59,6 +59,7 @@ export default function App() {
                         await AsyncStorage.setItem('userName', data.name); // store user name in async storage for quick retrieval
                     } else {
                         setIsDetailer(false); // if not found, default to customer
+                        await AsyncStorage.removeItem('userName'); // reset user name
                     }
                     setIsSignedIn(true);
 

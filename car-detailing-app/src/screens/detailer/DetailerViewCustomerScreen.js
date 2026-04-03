@@ -34,7 +34,7 @@ export default function DetailerViewCustomerScreen({ route }) {
                     // get names of users from firestore using UIDs
                     const otherUserNames = await getOtherUserNames(data.userIds, userUid);
                     const chatName = Object.values(otherUserNames).join(','); // chat name is users' names separated by commas
-                    navigation.navigate('DetailerChats', { screen: 'ChatMessages', params: {
+                    navigation.navigate('DetailerChats', { screen: 'ChatMessages', initial: false, params: {
                         id: chatDoc.id,
                         otherUserNames,
                         chatName
@@ -47,7 +47,7 @@ export default function DetailerViewCustomerScreen({ route }) {
             const newChatRef = await addDoc(chatsCollection, {
                 userIds: [userUid, requestData.customerUid] // chat between detailer and customer
             });
-            navigation.navigate('DetailerChats', { screen: 'ChatMessages', params: {
+            navigation.navigate('DetailerChats', { screen: 'ChatMessages', initial: false, params: {
                 id: newChatRef.id,
                 otherUserNames: requestData.customerName,
                 chatName: requestData.customerName,
