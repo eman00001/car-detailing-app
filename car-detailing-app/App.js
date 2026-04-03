@@ -30,6 +30,7 @@ import SuccessTransitionScreen from './src/screens/SuccessTransitionScreen';
 import DetailerViewCustomerScreen from './src/screens/detailer/DetailerViewCustomerScreen';
 import CustomerRequestDraftsScreen from './src/screens/customer/CustomerRequestDraftsScreen';
 import { PRIMARY_TEXT_COLOR } from './src/stylesheet';
+import CustomerRequestDetailsScreen from './src/screens/customer/CustomerRequestDetailsScreen';
 
 const TAB_ICON_SIZE = 40;
 const TAB_LABEL_HEIGHT = 25;
@@ -131,7 +132,8 @@ export default function App() {
                     DetailerDashboardHome: {
                         screen: DetailerDashboardScreen,
                         options: {
-                            title: 'Detailer Dashboard',
+                            title: 'Dashboard',
+                            headerShown: false,
                         },
                     },
                     DetailerDashboardMap: {
@@ -240,8 +242,14 @@ export default function App() {
                         screen: CustomerRequestDraftsScreen,
                         options: {
                             title: 'Request Drafts',
-                        }
-                    }
+                        },
+                    },
+                    RequestDetails: {
+                        screen: CustomerRequestDetailsScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
                 }
             })
             const TabNavigator = createBottomTabNavigator({

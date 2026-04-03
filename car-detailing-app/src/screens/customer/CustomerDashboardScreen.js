@@ -64,6 +64,7 @@ export default function CustomerDashboardScreen() {
                     where("status", "!=", "draft"), // filter out drafts
                 )}
                 requestsOrder={orderBy("updatedAt", "desc")}
+                onPressItem={item => navigation.navigate('RequestDetails', { request: item })}
             />
             <Pressable
                 style={[styles.button, styles.buttonPrimary, { marginTop: 18 }]}

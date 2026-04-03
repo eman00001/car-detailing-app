@@ -49,6 +49,12 @@ export default StyleSheet.create({
         justifyContent: 'space-between',
         gap: 12,
     },
+    rowStart: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: 12,
+    },
 
     // heading stylings
     h1: {
@@ -122,10 +128,6 @@ export default StyleSheet.create({
     },
     buttonPrimary: {
         backgroundColor: PRIMARY_FILL_DARK_COLOR,
-    },
-    buttonPrimary: {
-        backgroundColor: '#007AFF',
-        borderColor: '#007AFF',
     },
     buttonDisabled: {
         backgroundColor: PRIMARY_DISABLED_COLOR,
@@ -202,9 +204,6 @@ export default StyleSheet.create({
     status: {
         fontSize: 14,
         fontWeight: "700",
-    },
-    detailScroll: {
-        padding: 16,
     },
     detailSection: {
         marginBottom: 18,
