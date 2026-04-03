@@ -3,11 +3,13 @@ import { createStaticNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { firebase_auth, db } from './src/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
@@ -25,6 +27,12 @@ import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScre
 import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
 import CustomerRequestConfirmScreen from './src/screens/customer/CustomerRequestConfirmScreen';
 import SuccessTransitionScreen from './src/screens/SuccessTransitionScreen';
+import { PRIMARY_TEXT_COLOR } from './src/stylesheet';
+
+const TAB_ICON_SIZE = 40;
+const TAB_LABEL_HEIGHT = 25;
+const TAB_ICON_FOCUSED_COLOR = PRIMARY_TEXT_COLOR;
+const TAB_ICON_UNFOCUSED_COLOR = '#777';
 
 export default function App() {
     const [loading, setLoading] = useState(true);
@@ -83,6 +91,16 @@ export default function App() {
         );
     }
 
+    const TabIcon = ({ name, focused }) => (
+        <View style={{ padding: 5 }}>
+            <FontAwesome
+                name={name}
+                color={focused ? TAB_ICON_FOCUSED_COLOR : TAB_ICON_UNFOCUSED_COLOR}
+                size={TAB_ICON_SIZE - 10}
+            />
+        </View>
+    );
+
     let Navigation;
 
     if (isSignedIn) {
@@ -109,36 +127,48 @@ export default function App() {
                 initialRouteName: 'DetailerDashboard',
                 screenOptions: {
                     headerShown: false,
+                    tabBarStyle: {
+                        height: TAB_ICON_SIZE + TAB_LABEL_HEIGHT,
+                    },
+                    tabBarIconStyle: {
+                        width: '100%',
+                        height: TAB_ICON_SIZE,
+                    },
                 },
                 screens: {
                     DetailerDashboard: {
                         screen: DetailerDashboardScreen,
                         options: {
                             title: 'Detailer Dashboard',
+                            tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />, 
                         },
                     },
                     DetailerJobsScreen: {
                         screen: DetailerJobsScreen,
                         options: {
                             title: 'Jobs',
+                            tabBarIcon: ({ focused }) => <TabIcon name="suitcase" focused={focused} />,
                         },
                     },
                     DetailerMapScreen: {
                         screen: DetailerMapScreen,
                         options: {
                             title: 'Map',
+                            tabBarIcon: ({ focused }) => <TabIcon name="map" focused={focused} />,
                         },
                     },
                     DetailerChats: {
                         screen: ChatNavigator,
                         options: {
                             title: 'Chats',
+                            tabBarIcon: ({ focused }) => <TabIcon name="comments" focused={focused} />,
                         },
                     },
                     LogOut: {
                         screen: LogOutScreen,
                         options: {
                             title: 'Log Out',
+                            tabBarIcon: ({ focused }) => <TabIcon name="user-times" focused={focused} />,
                         },
                     },
                 },
@@ -150,24 +180,34 @@ export default function App() {
                 initialRouteName: 'CustomerDashboard',
                 screenOptions: {
                     headerShown: false,
+                    tabBarStyle: {
+                        height: TAB_ICON_SIZE + TAB_LABEL_HEIGHT,
+                    },
+                    tabBarIconStyle: {
+                        width: '100%',
+                        height: TAB_ICON_SIZE,
+                    },
                 },
                 screens: {
                     CustomerDashboard: {
                         screen: CustomerDashboardScreen,
                         options: {
                             title: 'Customer Dashboard',
+                            tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
                         },
                     },
                     CustomerChats: {
                         screen: ChatNavigator,
                         options: {
                             title: 'Chats',
+                            tabBarIcon: ({ focused }) => <TabIcon name="comments" focused={focused} />,
                         },
                     },
                     LogOut: {
                         screen: LogOutScreen,
                         options: {
                             title: 'Log Out',
+                            tabBarIcon: ({ focused }) => <TabIcon name="user-times" focused={focused} />,
                         },
                     },
                 },
