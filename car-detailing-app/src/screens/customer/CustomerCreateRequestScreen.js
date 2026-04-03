@@ -387,7 +387,7 @@ export default function CustomerCreateRequestScreen({ route }) {
     const renderDetailingTypeDropdownPicker = () => {
         return (
             <View>
-                <Text>
+                <Text style={{ marginBottom: 4 }}>
                     {detailingTypes?.find(type => type.name === serviceType)?.description}
                 </Text>
                 <DropDownPicker
@@ -527,12 +527,19 @@ export default function CustomerCreateRequestScreen({ route }) {
                         </View>
                     )}
 
-                    <Text style={styles.inputLabel}>When are you available?</Text>
+                    <View>
+                        <Text style={styles.inputLabel}>When are you available?</Text>
+                        <Text>
+                            Let us know around when you may be available. This could be a specific date,
+                            or a periodic time such as every Tuesday from 5:00&ndash;7:00pm.
+                        </Text>
+                    </View>
                     <TextInput
                         value={availabilityText}
                         onChangeText={setAvailabilityText}
                         placeholder="Weekend afternoon, etc."
-                        style={styles.textInput}
+                        multiline
+                        style={[styles.textInput, { minHeight: 90, textAlignVertical: "top" }]}
                     />
 
                     <View style={styles.row}>
