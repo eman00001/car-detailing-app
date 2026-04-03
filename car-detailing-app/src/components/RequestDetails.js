@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import styles from '../stylesheet';
 import DetailerMap from './DetailerMap';
 import ErrorScreen from '../screens/ErrorScreen';

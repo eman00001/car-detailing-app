@@ -45,7 +45,8 @@ export default function DetailerViewCustomerScreen({ route }) {
 
             // if doesn't exist yet, create new chat
             const newChatRef = await addDoc(chatsCollection, {
-                userIds: [userUid, requestData.customerUid] // chat between detailer and customer
+                userIds: [userUid, requestData.customerUid], // chat between detailer and customer
+                mostRecentTimestamp: Timestamp.fromMillis(0), // no messages yet, so 'null' time
             });
             navigation.navigate('DetailerChats', { screen: 'ChatMessages', initial: false, params: {
                 id: newChatRef.id,
@@ -113,14 +114,14 @@ export default function DetailerViewCustomerScreen({ route }) {
                 contentContainerStyle={[styles.listContainer, styles.paddedScrollContainer]}
             >
                 <RequestDetails request={request} />
-                {requestData.status === 'open' ? (<>
-                    <Pressable
-                        style={[styles.button, isSaving ? styles.buttonDisabled : styles.buttonPlain]}
-                        onPress={openChat}
-                        disabled={isSaving}
-                    >
-                        <Text style={styles.buttonText}>Open Chat</Text>
-                    </Pressable>
+                <Pressable
+                    style={[styles.button, isSaving ? styles.buttonDisabled : styles.buttonPlain]}
+                    onPress={openChat}
+                    disabled={isSaving}
+                >
+                    <Text style={styles.buttonText}>Open Chat</Text>
+                </Pressable>
+                {requestData.status === 'open' ? (
                     <Pressable
                         style={[styles.button, isSaving ? styles.buttonDisabled : styles.buttonPrimary]}
                         onPress={acceptRequest}
@@ -128,7 +129,7 @@ export default function DetailerViewCustomerScreen({ route }) {
                     >
                         <Text style={styles.buttonText}>Accept</Text>
                     </Pressable>
-                </>) : requestData.status === 'accepted' ? (
+                ) : requestData.status === 'accepted' ? (
                     <View style={styles.row}>
                         <Pressable
                             style={[styles.button, styles.buttonStretch, isSaving ? styles.buttonDisabled : styles.buttonPlain]}

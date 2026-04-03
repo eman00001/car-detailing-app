@@ -12,7 +12,7 @@ import styles, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { db } from '../../firebaseConfig';
-import { onSnapshot, collection, doc, query, orderBy, setDoc, serverTimestamp } from 'firebase/firestore';
+import { onSnapshot, collection, doc, query, orderBy, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
@@ -123,13 +123,20 @@ export default function ChatMessagesScreen({ route }) {
 
             const fileURLs = await uploadImages(currImages, CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET);
 
+            const chatDocRef = doc(db, 'chats', chatId);
             const messageDocRef = doc(collection(db, 'chats', chatId, 'messages'));
-            await setDoc(messageDocRef, {
-                userId: userUid,
-                content: currMessage,
-                attachments: fileURLs,
-                timestamp: serverTimestamp(),
-            });
+            await Promise.all([
+                updateDoc(chatDocRef, {
+                    mostRecentMessage: currMessage || 'Attachment',
+                    mostRecentTimestamp: serverTimestamp(),
+                }),
+                setDoc(messageDocRef, {
+                    userId: userUid,
+                    content: currMessage,
+                    attachments: fileURLs,
+                    timestamp: serverTimestamp(),
+                }),
+            ]);
             setCurrMessage(''); // clear current message and attachments
             setCurrImages([]);  //
         } catch (e) {

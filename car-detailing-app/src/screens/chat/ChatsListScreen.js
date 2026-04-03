@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { db } from '../../firebaseConfig';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, limit, orderBy, getDocs } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
 import LoadingScreen from '../LoadingScreen';
@@ -13,6 +13,9 @@ import ErrorScreen from '../ErrorScreen';
 
 import styles from '../../stylesheet';
 import { getOtherUserNames } from '../../firebaseUtils';
+import { formatDateTime, snippet } from '../../utils';
+
+const MESSAGE_PREVIEW_MAX_LENGTH = 20;
 
 export default function ChatsListScreen() {
     const [loading, setLoading] = useState(true);
@@ -44,7 +47,8 @@ export default function ChatsListScreen() {
 
         const chatQuery = query(
             collection(db, 'chats'),
-            where('userIds', 'array-contains', userUid)
+            where('userIds', 'array-contains', userUid),
+            orderBy('mostRecentTimestamp', 'desc')
         );
         const unsubscribe = onSnapshot(chatQuery, async (chatQuery) => {
             const chats = await Promise.all(
@@ -57,6 +61,8 @@ export default function ChatsListScreen() {
                         id: chatDoc.id,
                         otherUserNames,
                         chatName,
+                        mostRecentMessage: data.mostRecentMessage,
+                        mostRecentTimestamp: data.mostRecentTimestamp,
                     };
                 })
             );
@@ -67,8 +73,12 @@ export default function ChatsListScreen() {
     }, [userUid]); // when user ID changes, rerun query
 
     const handlePressChat = (chat) => {
-        navigation.navigate('ChatMessages', chat);
-    }
+        navigation.navigate('ChatMessages', {
+            id: chat.id,
+            otherUserNames: chat.otherUserNames,
+            chatName: chat.chatName,
+        });
+    };
 
     // if loading, show loading icon
     if (loading) {
@@ -91,11 +101,26 @@ export default function ChatsListScreen() {
                     >
                         <View style={chatsListStyles.listItem}>
                             <View style={chatsListStyles.itemIcon} />
-                            <Text style={chatsListStyles.itemText}>{item.chatName}</Text>
+                            <View style={{ flex: 1 }}>
+                                <Text style={chatsListStyles.itemText}>{item.chatName}</Text>
+                                {item.mostRecentMessage && (
+                                    <View style={styles.row}>
+                                        <Text style={chatsListStyles.itemMessage}>
+                                            {snippet(item.mostRecentMessage, MESSAGE_PREVIEW_MAX_LENGTH)}
+                                        </Text>
+                                        <Text style={chatsListStyles.itemMessage}>
+                                            {item.mostRecentTimestamp && formatDateTime(item.mostRecentTimestamp.toDate())}
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
                         </View>
                     </Pressable>
                 </>)}
                 contentContainerStyle={styles.listContainer}
+                ListEmptyComponent={
+                    <Text style={styles.paddedContainer}>No chats yet</Text>
+                }
                 keyExtractor={item => item.id}
             />
         </SafeAreaView>
@@ -119,10 +144,14 @@ const chatsListStyles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 700,
     },
+    itemMessage: {
+        color: '#777',
+        fontSize: 14,
+    },
     itemSeparator: {
         borderColor: '#DDD',
         borderTopWidth: 0.5,
         marginInline: 12,
         paddingTop: 12,
-    }
+    },
 });
