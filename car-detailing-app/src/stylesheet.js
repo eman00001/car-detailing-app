@@ -1,14 +1,26 @@
 import { StyleSheet } from "react-native";
 
+export const SECONDARY_BG_COLOR = 'rgba(255, 251, 249, 1)';
+export const SECONDARY_FILL_LIGHT_COLOR = 'rgba(238, 223, 216, 1)';
+
+export const PRIMARY_COLOR = 'hsla(195, 100%, 71%, 1.00)';
+export const PRIMARY_BG_COLOR = 'hsla(193, 100%, 98%, 1.00)';
+export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(195, 77%, 90%, 1.00)';
+export const PRIMARY_FILL_DARK_COLOR = 'rgba(52, 171, 210, 1)';
+export const PRIMARY_BORDER_COLOR = 'hsla(196, 54%, 66%, 1.00)';
+export const PRIMARY_TEXT_COLOR = 'hsla(196, 100%, 23%, 1.00)';
+
 export default StyleSheet.create({
     // container stylings
     container: {
         flex: 1,
+        backgroundColor: SECONDARY_BG_COLOR,
     },
     containerCentered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: SECONDARY_BG_COLOR,
     },
     authContainer: {
         flex: 1,
@@ -16,6 +28,18 @@ export default StyleSheet.create({
         alignItems: 'stretch',
         gap: 20,
         marginInline: 30,
+    },
+    paddedContainer: {
+        flex: 1,
+        padding: 18,
+        paddingBottom: 18,
+        backgroundColor: SECONDARY_BG_COLOR,
+    },
+    paddedScrollContainer: {
+        paddingBottom: 18, // scroll views don't apply padding to bottom, so new additional rule
+    },
+    listContainer: {
+        gap: 12,
     },
 
     // heading stylings
@@ -56,6 +80,7 @@ export default StyleSheet.create({
         fontWeight: 700,
     },
     textInput: {
+        backgroundColor: '#FFF',
         borderColor: '#000',
         borderWidth: 1,
         borderRadius: 5,
@@ -65,25 +90,26 @@ export default StyleSheet.create({
 
     // button stylings
     button: {
-        borderColor: '#000',
+        borderColor: PRIMARY_BORDER_COLOR,
         borderWidth: 1,
         borderRadius: 10,
         padding: 10,
     },
     buttonText: {
+        color: PRIMARY_TEXT_COLOR,
         fontSize: 20,
         fontWeight: 700,
         textAlign: 'center',
     },
     buttonPlain: {
-        backgroundColor: '#DDD',
+        backgroundColor: PRIMARY_FILL_LIGHT_COLOR,
     },
     buttonPrimary: {
         backgroundColor: '#007AFF',
         borderColor: '#007AFF',
     },
     buttonDisabled: {
-        backgroundColor: '#AAA',
+        backgroundColor: PRIMARY_BORDER_COLOR,
     },
     
     // link stylings
@@ -113,9 +139,10 @@ export default StyleSheet.create({
     },
     card: {
         backgroundColor: "#FFFFFF",
+        borderColor: PRIMARY_FILL_LIGHT_COLOR,
+        borderWidth: 1,
         padding: 18,
         borderRadius: 14,
-        marginBottom: 16,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
@@ -188,5 +215,13 @@ export default StyleSheet.create({
     },
     map: {
         flex: 1
+    },
+    logo: {
+        width: 200,
+        height: 200,
+        alignSelf: 'center',
+        borderColor: PRIMARY_COLOR,
+        borderWidth: 5,
+        borderRadius: 5,
     }
 });

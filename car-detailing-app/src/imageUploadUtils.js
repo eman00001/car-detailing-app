@@ -5,11 +5,12 @@ const CLOUDINARY_CLOUD_NAME = 'dtvuvzxf5';
 const CLOUDINARY_UPLOAD_API_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
 
 export const CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET = 'chat-message-attachment-preset';
+export const CLOUDINARY_CUSTOMER_REQUEST_CAR_PHOTO_UPLOAD_PRESET = 'car-photo-preset';
 
 // function uploads an array of image files to Cloudinary, with the given upload preset
-export async function uploadImages(iamgeURIs, uploadPreset) {
+export async function uploadImages(imageURIs, uploadPreset) {
     const fileURLs = await Promise.all(
-        iamgeURIs.map(async (uri) => {
+        imageURIs.map(async (uri) => {
             // reduce data load by compressing image
             const compressContext = ImageManipulator.manipulate(uri);
             const compressRender = await compressContext.renderAsync();
