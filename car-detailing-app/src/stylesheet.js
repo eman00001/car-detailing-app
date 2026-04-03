@@ -189,17 +189,24 @@ export default StyleSheet.create({
     service: {
         fontSize: 18,
         fontWeight: "600",
+        marginBottom: 2,
+    },
+    description: {
+        fontSize: 16,
         marginBottom: 4,
     },
     vehicle: {
         fontSize: 16,
-        color: "#444",
-        marginBottom: 6,
+        color: "#777",
     },
     date: {
         fontSize: 14,
-        color: "#666",
-        marginBottom: 8,
+        color: "#777",
+    },
+    updatedAtTime: {
+        fontSize: 14,
+        color: '#777',
+        marginTop: 6,
     },
     status: {
         fontSize: 14,
@@ -229,11 +236,6 @@ export default StyleSheet.create({
         borderRadius: 14,
         overflow: 'hidden',
         marginBottom: 18,
-    },
-    detailActionRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 18,
     },
     cardPressed: {
         opacity: 0.7,

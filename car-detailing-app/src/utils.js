@@ -85,3 +85,6 @@ export const formatterCAD = Intl.NumberFormat('en-us', {
     style: 'currency',
     currency: 'CAD',
 });
+
+// function takes a potentially long string an snips it to the first N characters
+export const snippet = (text, maxLength) => text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;

@@ -13,6 +13,7 @@ export default function CustomerRequestDraftsScreen() {
     const navigation = useNavigation();
 
     const [userUid, setUserUid] = useState(null);
+    const [requests, setRequests] = useState(null);
 
     // get the user's UID and name from async storage
     useEffect(() => {
@@ -38,9 +39,11 @@ export default function CustomerRequestDraftsScreen() {
 
     return (
         <SafeAreaView style={styles.paddedContainer}>
-            <Text style={styles.h2}>My Request Drafts</Text>
+            <Text style={styles.h2}>My Request Drafts {requests && `(${requests.length})`}</Text>
             <RequestsList
                 userUid={userUid}
+                requests={requests}
+                setRequests={setRequests}
                 requestsFilter={and(
                     where("customerUid", "==", userUid),
                     where("status", "==", "draft"), // filter out drafts

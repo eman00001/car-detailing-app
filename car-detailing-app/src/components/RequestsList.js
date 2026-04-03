@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { View, Text, FlatList, Pressable } from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from '../firebaseConfig';
 import { query, collection, onSnapshot } from 'firebase/firestore';
 
 import styles from '../stylesheet';
 import LoadingScreen from '../screens/LoadingScreen';
+import { formatDateTime, snippet } from '../utils';
+import { statusColors } from '../constants';
 
-export default function RequestsList({ userUid, requestsFilter, requestsOrder, onPressItem }) {
-    const [requests, setRequests] = useState([]);
+// snip description to a max of 40 characters long
+const DESCRIPTION_MAX_LENGTH = 40;
+
+export default function RequestsList({ userUid, requests, setRequests, requestsFilter, requestsOrder, onPressItem }) {
     const [isLoading, setLoading] = useState(true);
 
     // get requests from database
@@ -31,15 +34,25 @@ export default function RequestsList({ userUid, requestsFilter, requestsOrder, o
         return unsubscribe;
     }, [userUid]);
 
-    const renderItem = ({ item }) => (
-        <Pressable
+    const renderItem = ({ item }) => {
+        const vehicleDetails = [];
+        if (item.carMake) vehicleDetails.push(item.carMake);
+        if (item.carModel) vehicleDetails.push(item.carModel);
+        const vehicle = vehicleDetails.join(', ');
+
+        const updatedAt = item.updatedAt?.toDate();
+        const updatedAtTime = updatedAt && formatDateTime(updatedAt);
+
+        return <Pressable
             style={styles.card}
             onPress={() => onPressItem?.(item)}
         >
             <View style={styles.left}>
                 <Text style={styles.service}>{item.serviceType}</Text>
-                <Text style={styles.vehicle}>Vehicle</Text>
+                <Text style={styles.description}>{snippet(item.description, DESCRIPTION_MAX_LENGTH)}</Text>
+                {vehicle && <Text style={styles.vehicle}>{vehicle}</Text>}
                 <Text style={styles.date}>{item.availabilityText}</Text>
+                {updatedAtTime && <Text style={styles.updatedAtTime}>Last updated {updatedAtTime}</Text>}
             </View>
 
             <View style={styles.right}>
@@ -48,7 +61,7 @@ export default function RequestsList({ userUid, requestsFilter, requestsOrder, o
                 </Text>
             </View>
         </Pressable>
-    );
+    };
 
     if (isLoading) {
         return <LoadingScreen />;
@@ -65,11 +78,3 @@ export default function RequestsList({ userUid, requestsFilter, requestsOrder, o
         </View>
     );
 }
-
-const statusColors = {
-  open: { color: "#770" },
-  pending: { color: "#915700" },    // orange
-  accepted: { color: "#088" },   // blue
-  completed: { color: "#0f9713" },  // green
-  issue: { color: "#bd0d00" },
-};

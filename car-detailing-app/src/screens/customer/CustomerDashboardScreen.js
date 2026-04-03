@@ -14,6 +14,7 @@ export default function CustomerDashboardScreen() {
     const navigation = useNavigation();
     const [userUid, setUserUid] = useState(null);
     const [name, setName] = useState(null);
+    const [requests, setRequests] = useState(null);
 
     // get the user's UID and name from async storage
     useEffect(() => {
@@ -49,7 +50,7 @@ export default function CustomerDashboardScreen() {
                 Welcome{name ? `, ${name}!` : '!'}
             </Text>
             <View style={[styles.row, styles.spaceBottom]}>
-                <Text style={styles.h3}>My Requests</Text>
+                <Text style={styles.h3}>My Requests {requests && `(${requests.length})`}</Text>
                 <Pressable
                     style={[styles.buttonSmall, styles.buttonPlain]}
                     onPress={() => navigation.navigate('RequestDrafts')}
@@ -59,6 +60,8 @@ export default function CustomerDashboardScreen() {
             </View>
             <RequestsList
                 userUid={userUid}
+                requests={requests}
+                setRequests={setRequests}
                 requestsFilter={and(
                     where("customerUid", "==", userUid),
                     where("status", "!=", "draft"), // filter out drafts

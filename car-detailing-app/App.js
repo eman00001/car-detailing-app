@@ -31,6 +31,7 @@ import DetailerViewCustomerScreen from './src/screens/detailer/DetailerViewCusto
 import CustomerRequestDraftsScreen from './src/screens/customer/CustomerRequestDraftsScreen';
 import { PRIMARY_TEXT_COLOR } from './src/stylesheet';
 import CustomerRequestDetailsScreen from './src/screens/customer/CustomerRequestDetailsScreen';
+import DetailerAllRequestsMapScreen from './src/screens/detailer/DetailerAllRequestsMapScreen';
 
 const TAB_ICON_SIZE = 40;
 const TAB_LABEL_HEIGHT = 25;
@@ -128,6 +129,9 @@ export default function App() {
         if (isDetailer) {
             const DetailerDashboardStack = createNativeStackNavigator({
                 initialRouteName: 'DetailerDashboardHome',
+                screenOptions: {
+                    headerBackButtonDisplayMode: 'minimal',
+                },
                 screens: {
                     DetailerDashboardHome: {
                         screen: DetailerDashboardScreen,
@@ -139,7 +143,7 @@ export default function App() {
                     DetailerDashboardMap: {
                         screen: DetailerMapScreen,
                         options: {
-                            title: 'Dashboard Map',
+                            title: 'Open Requests Map',
                         },
                     },
                     DetailerRequestDetails: {
@@ -153,6 +157,9 @@ export default function App() {
 
             const DetailerJobsStack = createNativeStackNavigator({
                 initialRouteName: 'DetailerJobsHome',
+                screenOptions: {
+                    headerBackButtonDisplayMode: 'minimal',
+                },
                 screens: {
                     DetailerJobsHome: {
                         screen: DetailerJobsScreen,
@@ -174,6 +181,27 @@ export default function App() {
                     },
                 },
             });
+
+            const DetailerMapStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerMap',
+                screenOptions: {
+                    headerBackButtonDisplayMode: 'minimal',
+                },
+                screens: {
+                    DetailerMap: {
+                        screen: DetailerAllRequestsMapScreen,
+                        options: {
+                            title: 'Map',
+                        },
+                    },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
+                },
+            })
 
             const TabNavigator = createBottomTabNavigator({
                 initialRouteName: 'DetailerDashboard',
@@ -203,7 +231,7 @@ export default function App() {
                         },
                     },
                     DetailerMapScreen: {
-                        screen: DetailerMapScreen,
+                        screen: DetailerMapStack,
                         options: {
                             title: 'Map',
                             tabBarIcon: ({ focused }) => <TabIcon name="map" focused={focused} />,

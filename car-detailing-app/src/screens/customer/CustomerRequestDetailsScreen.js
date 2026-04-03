@@ -13,9 +13,12 @@ export default function CustomerRequestDetailsScreen({ route }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <RequestDetails
-                request={request}
-            />
+            <ScrollView
+                style={styles.paddedContainer}
+                contentContainerStyle={[styles.listContainer, styles.paddedScrollContainer]}
+            >
+                <RequestDetails request={request} />
+            </ScrollView>
         </SafeAreaView>
     );
 }
