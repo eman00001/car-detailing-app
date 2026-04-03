@@ -1,14 +1,14 @@
 import { StyleSheet } from "react-native";
 
 export const SECONDARY_BG_COLOR = 'rgba(255, 251, 249, 1)';
-export const SECONDARY_FILL_LIGHT_COLOR = 'rgba(238, 223, 216, 1)';
+export const SECONDARY_FILL_LIGHT_COLOR = 'rgba(247, 231, 224, 1)';
 
 export const PRIMARY_COLOR = 'hsla(195, 100%, 71%, 1.00)';
 export const PRIMARY_BG_COLOR = 'hsla(193, 100%, 98%, 1.00)';
-export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(195, 77%, 90%, 1.00)';
+export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(194, 38%, 89%, 1.00)';
 export const PRIMARY_FILL_DARK_COLOR = 'rgba(8, 159, 210, 1)';
 export const PRIMARY_FILL_MUTED_COLOR = 'rgba(105, 164, 182, 1)';
-export const PRIMARY_BORDER_COLOR = 'hsla(196, 13%, 59%, 1.00)';
+export const PRIMARY_DISABLED_COLOR = 'hsla(196, 13%, 59%, 1.00)';
 export const PRIMARY_TEXT_COLOR = 'hsla(196, 100%, 23%, 1.00)';
 
 export default StyleSheet.create({
@@ -107,7 +107,7 @@ export default StyleSheet.create({
         backgroundColor: PRIMARY_FILL_DARK_COLOR,
     },
     buttonDisabled: {
-        backgroundColor: PRIMARY_BORDER_COLOR,
+        backgroundColor: PRIMARY_DISABLED_COLOR,
     },
     
     // link stylings

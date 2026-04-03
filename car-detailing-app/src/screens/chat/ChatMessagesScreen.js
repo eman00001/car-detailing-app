@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, Image, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, FlatList, Image, KeyboardAvoidingView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { formatDateTime } from '../../utils';
-import styles, { PRIMARY_BG_COLOR, PRIMARY_BORDER_COLOR, PRIMARY_FILL_DARK_COLOR, PRIMARY_FILL_LIGHT_COLOR, PRIMARY_TEXT_COLOR, SECONDARY_FILL_LIGHT_COLOR } from '../../stylesheet';
+import styles, {
+    PRIMARY_BG_COLOR, PRIMARY_DISABLED_COLOR, PRIMARY_FILL_DARK_COLOR,
+    PRIMARY_FILL_LIGHT_COLOR, PRIMARY_FILL_MUTED_COLOR, PRIMARY_TEXT_COLOR,
+    SECONDARY_FILL_LIGHT_COLOR
+} from '../../stylesheet';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -239,6 +243,7 @@ export default function ChatMessagesScreen({ route }) {
                             disabled={isSending}
                             onPress={handleSendMessage}
                         >
+                            {isSending && <ActivityIndicator color="#FFF" />}
                             <Text style={chatStyles.currMessageBtnText}>Send</Text>
                         </Pressable>
                     </View>
@@ -285,7 +290,7 @@ const chatStyles = StyleSheet.create({
     },
     messageInputContainer: {
         backgroundColor: PRIMARY_BG_COLOR,
-        borderTopColor: PRIMARY_BORDER_COLOR,
+        borderTopColor: PRIMARY_FILL_MUTED_COLOR,
         borderTopWidth: 2,
         padding: 12,
         gap: 6,
@@ -299,27 +304,28 @@ const chatStyles = StyleSheet.create({
     },
     messageInputRow: {
         backgroundColor: '#FFF',
-        borderColor: PRIMARY_BORDER_COLOR,
+        borderColor: PRIMARY_TEXT_COLOR,
         borderWidth: 1,
         borderRadius: 6,
         padding: 12,
         flexDirection: 'row',
         justifyContent: 'stretch',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         gap: 12,
+        maxHeight: 150,
     },
     messageInput: {
         flex: 1,
     },
     currMessageBtn: {
+        flexDirection: 'row',
         backgroundColor: PRIMARY_FILL_DARK_COLOR,
-        borderColor: PRIMARY_TEXT_COLOR,
-        borderWidth: 1,
         padding: 6,
         borderRadius: 6,
+        gap: 6,
     },
     currMessageBtnSending: {
-        backgroundColor: PRIMARY_TEXT_COLOR,
+        backgroundColor: PRIMARY_DISABLED_COLOR,
     },
     currMessageBtnText: {
         color: '#FFF',
