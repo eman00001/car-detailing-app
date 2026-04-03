@@ -52,7 +52,7 @@ export default function DetailerDashboardScreen() {
                 setRequests={setRequests}
                 requestsFilter={where('status', '==', 'open')}
                 requestsOrder={orderBy('updatedAt', 'desc')}
-                onPressItem={item => navigation.navigate('DetailerRequestDetails', { request: item, source: 'dashboard' })}
+                onPressItem={item => navigation.navigate('DetailerRequestDetails', { request: item })}
             />
             <Pressable
                 style={[styles.button, styles.buttonPlain, { marginTop: 18 }]}

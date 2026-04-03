@@ -43,7 +43,7 @@ export default function DetailerJobsScreen() {
                 setRequests={setJobs}
                 requestsFilter={where('acceptedByUid', '==', userUid)}
                 requestsOrder={orderBy('acceptedAt', 'desc')}
-                onPressItem={item => navigation.navigate('DetailerRequestDetails', { request: item, source: 'jobs' })}
+                onPressItem={item => navigation.navigate('DetailerRequestDetails', { request: item })}
             />
             <Pressable
                 style={[styles.button, styles.buttonPlain, { marginTop: 18 }]}
