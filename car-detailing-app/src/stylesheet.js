@@ -104,6 +104,10 @@ export default StyleSheet.create({
     buttonPlain: {
         backgroundColor: PRIMARY_FILL_LIGHT_COLOR,
     },
+    buttonPrimary: {
+        backgroundColor: '#007AFF',
+        borderColor: '#007AFF',
+    },
     buttonDisabled: {
         backgroundColor: PRIMARY_BORDER_COLOR,
     },
@@ -159,6 +163,11 @@ export default StyleSheet.create({
         fontWeight: "600",
         marginBottom: 4,
     },
+    vehicle: {
+        fontSize: 16,
+        color: "#444",
+        marginBottom: 6,
+    },
     date: {
         fontSize: 14,
         color: "#666",
@@ -167,6 +176,42 @@ export default StyleSheet.create({
     status: {
         fontSize: 14,
         fontWeight: "700",
+    },
+    detailScroll: {
+        padding: 16,
+    },
+    detailSection: {
+        marginBottom: 18,
+    },
+    detailLabel: {
+        fontSize: 16,
+        fontWeight: '700',
+        marginBottom: 6,
+    },
+    detailText: {
+        fontSize: 16,
+        lineHeight: 22,
+        color: '#333',
+    },
+    detailImage: {
+        width: '100%',
+        height: 220,
+        borderRadius: 14,
+        marginTop: 10,
+    },
+    detailMapContainer: {
+        height: 260,
+        borderRadius: 14,
+        overflow: 'hidden',
+        marginBottom: 18,
+    },
+    detailActionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 18,
+    },
+    cardPressed: {
+        opacity: 0.7,
     },
     map: {
         flex: 1
