@@ -12,6 +12,7 @@ import ErrorScreen from '../ErrorScreen';
 import styles from '../../stylesheet';
 import { formatterCAD } from '../../utils';
 import CustomerRequestStepIndicator from './CustomerRequestStepIndicator';
+import RequestDetails from '../../components/RequestDetails';
 
 export default function CustomerRequestConfirmScreen({ route }) {
     const navigation = useNavigation();
@@ -70,14 +71,6 @@ export default function CustomerRequestConfirmScreen({ route }) {
         }
     }
 
-    // renders a line in the request summary, with a label and the specified data
-    const renderRequestData = (label, data, isInline = true) => (
-        <View style={isInline && { flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={styles.h5}>{label}</Text>
-            <Text style={{ flexShrink: 1 }}>{data ?? 'Not specified'}</Text>
-        </View>
-    );
-
     // if loading, show a loading icon
     if (loading) {
         return <LoadingScreen />
@@ -95,20 +88,9 @@ export default function CustomerRequestConfirmScreen({ route }) {
                 contentContainerStyle={[styles.listContainer, styles.paddedScrollContainer]}
             >
                 <CustomerRequestStepIndicator currentStep={4} />
-                <Text style={styles.h3}>Please Confirm your Request:</Text>
-                {renderRequestData('Service Type', request.serviceType)}
-                {renderRequestData('Description', request.description)}
-                {renderRequestData('Location', request.locationText)}
-                {renderRequestData('Preferred Time', request.preferredTime)}
-                {renderRequestData('Car Make', request.carMake)}
-                {renderRequestData('Car Model', request.carModel)}
-                {renderRequestData('Car Trim', request.carTrim)}
-                {renderRequestData('Car Exterior Color', request.carExteriorColor)}
-                {renderRequestData('Car Interior Color', request.carInteriorColor)}
-                {renderRequestData('Estimated Cost', formatterCAD.format(request.estimatedCost))}
-
+                <Text style={[styles.h2, { marginBottom: 0 }]}>Please Confirm your</Text>
+                <RequestDetails request={request} />
                 <View style={styles.row}>
-
                     <Pressable
                         onPress={saveAsDraft}
                         disabled={isSubmitting}

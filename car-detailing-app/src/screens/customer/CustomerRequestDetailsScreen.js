@@ -1,4 +1,5 @@
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ScrollView } from "react-native";
 import ErrorScreen from "../ErrorScreen";
 import styles from "../../stylesheet";
 import RequestDetails from "../../components/RequestDetails";
