@@ -113,7 +113,8 @@ export default StyleSheet.create({
     // link stylings
     linkText: {
         fontSize: 18,
-        textDecorationLine: 'underline'
+        textDecorationLine: 'underline',
+        color: PRIMARY_TEXT_COLOR,
     },
 
     // misc stylings

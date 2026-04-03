@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, ScrollView, Text, ActivityIndicator, FlatList, Pressable, StyleSheet, BackHandler } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ErrorScreen from '../ErrorScreen';
 

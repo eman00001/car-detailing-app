@@ -7,6 +7,7 @@ import styles from '../../stylesheet';
 
 import { db } from '../../firebaseConfig';
 import { query, doc, collection, where, orderBy, onSnapshot } from 'firebase/firestore';
+import LoadingScreen from '../LoadingScreen';
 
 export default function CustomerDashboardScreen() {
     const [userUid, setUserUid] = useState(null);
@@ -79,11 +80,7 @@ export default function CustomerDashboardScreen() {
     }
 
     if (isLoading) {
-        return (
-        <SafeAreaView style={styles.container}>
-            <Text>Loading...</Text>
-        </SafeAreaView>
-        );
+        return <LoadingScreen />;
     }
 
     return (
