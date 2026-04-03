@@ -27,6 +27,7 @@ import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScre
 import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
 import CustomerRequestConfirmScreen from './src/screens/customer/CustomerRequestConfirmScreen';
 import SuccessTransitionScreen from './src/screens/SuccessTransitionScreen';
+import DetailerViewCustomerScreen from './src/screens/detailer/DetailerViewCustomerScreen';
 import CustomerRequestDraftsScreen from './src/screens/customer/CustomerRequestDraftsScreen';
 import { PRIMARY_TEXT_COLOR } from './src/stylesheet';
 
@@ -124,6 +125,54 @@ export default function App() {
         })
 
         if (isDetailer) {
+            const DetailerDashboardStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerDashboardHome',
+                screens: {
+                    DetailerDashboardHome: {
+                        screen: DetailerDashboardScreen,
+                        options: {
+                            title: 'Detailer Dashboard',
+                        },
+                    },
+                    DetailerDashboardMap: {
+                        screen: DetailerMapScreen,
+                        options: {
+                            title: 'Dashboard Map',
+                        },
+                    },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
+                },
+            });
+
+            const DetailerJobsStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerJobsHome',
+                screens: {
+                    DetailerJobsHome: {
+                        screen: DetailerJobsScreen,
+                        options: {
+                            title: 'Jobs',
+                        },
+                    },
+                    DetailerJobsMap: {
+                        screen: DetailerMapScreen,
+                        options: {
+                            title: 'Jobs Map',
+                        },
+                    },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
+                },
+            });
+
             const TabNavigator = createBottomTabNavigator({
                 initialRouteName: 'DetailerDashboard',
                 screenOptions: {
@@ -138,14 +187,14 @@ export default function App() {
                 },
                 screens: {
                     DetailerDashboard: {
-                        screen: DetailerDashboardScreen,
+                        screen: DetailerDashboardStack,
                         options: {
-                            title: 'Detailer Dashboard',
+                            title: 'Dashboard',
                             tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />, 
                         },
                     },
-                    DetailerJobsScreen: {
-                        screen: DetailerJobsScreen,
+                    DetailerJobs: {
+                        screen: DetailerJobsStack,
                         options: {
                             title: 'Jobs',
                             tabBarIcon: ({ focused }) => <TabIcon name="suitcase" focused={focused} />,
@@ -211,7 +260,7 @@ export default function App() {
                     CustomerDashboard: {
                         screen: CustomerRequestsStack,
                         options: {
-                            title: 'Customer Dashboard',
+                            title: 'Dashboard',
                             tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
                         },
                     },
