@@ -63,7 +63,7 @@ const stepIndicatorStyles = StyleSheet.create({
         height: 30,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 99999,
+        borderRadius: 15,
         backgroundColor: PRIMARY_FILL_DARK_COLOR,
     },
     currentStepIconText: {
