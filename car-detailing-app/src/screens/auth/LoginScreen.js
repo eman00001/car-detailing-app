@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { View, TextInput, Text, Pressable, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
+import { View, TextInput, Text, Pressable, KeyboardAvoidingView, ScrollView, Image, ActivityIndicator } from 'react-native';
 import styles from '../../stylesheet';
 
 import { getFirebaseAuthErrorMessage } from '../../firebaseUtils';
@@ -43,7 +43,7 @@ export default function LoginScreen() {
                 behavior='padding'
                 keyboardVerticalOffset={navigationHeaderHeight}
             >
-                <ScrollView>
+                <ScrollView contentContainerStyle={styles.paddedScrollContainer}>
                     <View style={styles.authContainer}>
                         <Image
                             style={styles.logo}
@@ -75,13 +75,17 @@ export default function LoginScreen() {
                             />
                         </View>
                         <Pressable
-                            style={[styles.button, loading ? styles.buttonDisabled : styles.buttonPlain]}
+                            style={[styles.button, loading ? styles.buttonDisabled : styles.buttonPrimary]}
                             disabled={loading}
                             onPress={handleSignIn}
                         >
-                            <Text style={styles.buttonText}>
-                                Sign In
-                            </Text>
+                            {loading ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    Sign In
+                                </Text>
+                            )}
                         </Pressable>
                         <Pressable
                             onPress={navigateToRegister}

@@ -1,35 +1,20 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, FlatList, Pressable } from 'react-native';
-import { useEffect, useState } from 'react';
+import { Text, Pressable, View } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import styles from '../../stylesheet';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from '../../firebaseConfig';
-import { query, doc, collection, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { doc, collection, where, and, orderBy } from 'firebase/firestore';
+
+import styles from '../../stylesheet';
+import RequestsList from '../../components/RequestsList';
 
 export default function CustomerDashboardScreen() {
+    const navigation = useNavigation();
     const [userUid, setUserUid] = useState(null);
     const [name, setName] = useState(null);
-    const [requests, setRequests] = useState([]);
-    const [isLoading, setLoading] = useState(true);
-    const navigation = useNavigation();
-
-     const renderItem = ({ item }) => (
-    <View style={styles.card}>
-        <View style={styles.left}>
-            <Text style={styles.service}>{item.serviceType}</Text>
-            <Text style={styles.vehicle}>Vehicle</Text>
-            <Text style={styles.date}>{item.preferredTime}</Text>
-        </View>
-
-        <View style={styles.right}>
-            <Text style={[styles.status, statusColors[item.status]]}>
-            {item.status.toUpperCase()}
-            </Text>
-        </View>
-        </View>
-    );
+    const [requests, setRequests] = useState(null);
 
     // get the user's UID and name from async storage
     useEffect(() => {
@@ -50,25 +35,6 @@ export default function CustomerDashboardScreen() {
         })();
     }, []);
 
-    // get requests from database
-    useEffect(() => {
-        if (!userUid) return;
-
-        const q = query(
-            collection(db, "requests"),
-            where("customerUid", "==", userUid),
-            orderBy("createdAt", "desc")
-        );
-
-        const unsubscribe = onSnapshot(q, (snap) => {
-            const requests = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            setRequests(requests);
-            setLoading(false);
-        });
-
-        return unsubscribe;
-    }, [userUid]);
-
     // function handles beginning to create a new request
     const handleCreateRequest = () => {
         // create empty document in order to generate ID
@@ -78,31 +44,34 @@ export default function CustomerDashboardScreen() {
         navigation.navigate('CreateRequest', { requestId });
     }
 
-    if (isLoading) {
-        return (
-        <SafeAreaView style={styles.container}>
-            <Text>Loading...</Text>
-        </SafeAreaView>
-        );
-    }
-
     return (
         <SafeAreaView style={styles.paddedContainer}>
-            <Text style={styles.h1}>
-                Welcome, {name ? name : "fakeUser"}
+            <Text style={styles.h2}>
+                Welcome{name ? `, ${name}!` : '!'}
             </Text>
-            <Text style={styles.h2}>My Requests</Text>
-            <View style={styles.container}>
-                <FlatList
-                    data={requests}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.listContainer}
-                    showsVerticalScrollIndicator={false}
-                />
+            <View style={[styles.row, styles.spaceBottom]}>
+                <Text style={styles.h3}>My Requests {requests && `(${requests.length})`}</Text>
+                <Pressable
+                    style={[styles.buttonSmall, styles.buttonPlain]}
+                    onPress={() => navigation.navigate('RequestDrafts')}
+                >
+                    <Text style={[styles.buttonText, styles.buttonTextSmall]}>See Drafts</Text>
+                </Pressable>
             </View>
+            <RequestsList
+                userUid={userUid}
+                requests={requests}
+                setRequests={setRequests}
+                requestsFilter={and(
+                    where("customerUid", "==", userUid),
+                    where("status", "!=", "draft"), // filter out drafts
+                )}
+                requestsOrder={orderBy("updatedAt", "desc")}
+                onPressItem={item => navigation.navigate('RequestDetails', { request: item })}
+                showCustomerName={false}
+            />
             <Pressable
-                style={[styles.button, isLoading ? styles.buttonDisabled : styles.buttonPlain, { marginTop: 18 }]}
+                style={[styles.button, styles.buttonPrimary, { marginTop: 18 }]}
                 onPress={handleCreateRequest}
                 >
                 <Text style={styles.buttonText}>Create New Request</Text>
@@ -110,11 +79,3 @@ export default function CustomerDashboardScreen() {
         </SafeAreaView>
     );
 }
-
-const statusColors = {
-  open: { color: "#770" },
-  pending: { color: "#915700" },    // orange
-  accepted: { color: "#088" },   // blue
-  completed: { color: "#0f9713" },  // green
-  issue: { color: "#bd0d00" },
-};

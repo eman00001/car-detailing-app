@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { db } from '../../firebaseConfig';
-import {doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import {doc, onSnapshot, Timestamp, updateDoc } from 'firebase/firestore';
 
 import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
@@ -12,6 +12,7 @@ import ErrorScreen from '../ErrorScreen';
 import styles from '../../stylesheet';
 import { formatterCAD } from '../../utils';
 import CustomerRequestStepIndicator from './CustomerRequestStepIndicator';
+import RequestDetails from '../../components/RequestDetails';
 
 export default function CustomerRequestConfirmScreen({ route }) {
     const navigation = useNavigation();
@@ -21,6 +22,9 @@ export default function CustomerRequestConfirmScreen({ route }) {
 
     // holds the request draft so far
     const [request, setRequest] = useState(null);
+
+    // true if the submit button has been pressed
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // handles getting the request from the database
     useEffect(() => {
@@ -44,24 +48,28 @@ export default function CustomerRequestConfirmScreen({ route }) {
         return unsubscribe;
     }, []);
 
-    // when submitting, change from status draft to open and return to dashboard
-    const submit = async () => {
-        const requestDoc = doc(db, 'requests', request.id);
-        try {
-            await updateDoc(requestDoc, { status: 'open' });
-            navigation.navigate('SuccessTransition');
-        } catch (e) {
-            console.error(e);
-        }
+    // request is already saved as draft, so just go to drafts scren
+    const saveAsDraft = () => {
+        // save as draft and go to drafts screen
+        navigation.popTo('Home', { screen: 'CustomerDashboard', params: { screen: 'RequestDrafts' }});
     }
 
-    // renders a line in the request summary, with a label and the specified data
-    const renderRequestData = (label, data, isInline = true) => (
-        <View style={isInline && { flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={styles.h5}>{label}</Text>
-            <Text style={{ flexShrink: 1 }}>{data ?? 'Not specified'}</Text>
-        </View>
-    );
+    // when submitting, change from status draft to open and return to dashboard
+    const submit = async () => {
+        setIsSubmitting(true); // begin submitting
+        const requestDoc = doc(db, 'requests', request.id);
+        try {
+            await updateDoc(requestDoc, { status: 'open', createdAt: Timestamp.now() });
+            navigation.navigate('SuccessTransition', {
+                navigationScreen: 'Home',
+                navigationParams: { screen: 'CustomerDashboard', params: { screen: 'AllRequests' } }
+            });
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsSubmitting(false); // end submitting
+        }
+    }
 
     // if loading, show a loading icon
     if (loading) {
@@ -80,21 +88,32 @@ export default function CustomerRequestConfirmScreen({ route }) {
                 contentContainerStyle={[styles.listContainer, styles.paddedScrollContainer]}
             >
                 <CustomerRequestStepIndicator currentStep={4} />
-                <Text style={styles.h3}>Please Confirm your Request:</Text>
-                {renderRequestData('Service Type', request.serviceType)}
-                {renderRequestData('Description', request.description)}
-                {renderRequestData('Location', request.locationText)}
-                {renderRequestData('Preferred Time', request.preferredTime)}
-                {renderRequestData('Car Make', request.carMake)}
-                {renderRequestData('Car Model', request.carModel)}
-                {renderRequestData('Car Trim', request.carTrim)}
-                {renderRequestData('Car Exterior Color', request.carExteriorColor)}
-                {renderRequestData('Car Interior Color', request.carInteriorColor)}
-                {renderRequestData('Estimated Cost', formatterCAD.format(request.estimatedCost))}
-
-                <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
-                    <Text style={styles.buttonText}>Submit</Text>
-                </Pressable>
+                <Text style={[styles.h2, { marginBottom: 0 }]}>Please Confirm your</Text>
+                <RequestDetails request={request} />
+                <View style={styles.row}>
+                    <Pressable
+                        onPress={saveAsDraft}
+                        disabled={isSubmitting}
+                        style={[
+                            styles.button,
+                            styles.buttonStretch,
+                            isSubmitting ? styles.buttonDisabled : styles.buttonPlain
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>Save as Draft</Text>
+                    </Pressable>
+                    <Pressable
+                        onPress={submit}
+                        disabled={isSubmitting}
+                        style={[
+                            styles.button,
+                            styles.buttonStretch,
+                            isSubmitting ? styles.buttonDisabled : styles.buttonPrimary
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </Pressable>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );

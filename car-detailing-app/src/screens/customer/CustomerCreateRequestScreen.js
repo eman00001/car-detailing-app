@@ -14,6 +14,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomerRequestStepIndicator from "./CustomerRequestStepIndicator";
 import { useNavigation } from "@react-navigation/native";
 
+// define default user agent to send to nominatim request, since requires to prevent misuse
+const DEFAULT_NOMINATIM_USER_AGENT = "Pere-Clean Faclon Detaining Services App";
+
 function buildLocationLabel(parts) {
     if (!parts) return "";
 
@@ -40,6 +43,7 @@ async function reverseGeocodeCoords(latitude, longitude) {
             headers: {
                 Accept: "application/json",
                 "Accept-Language": "en",
+                "User-Agent": DEFAULT_NOMINATIM_USER_AGENT,
             },
         }
     );
@@ -132,11 +136,15 @@ export default function CustomerCreateRequestScreen({ route }) {
                 // set form values based on existing request data
                 if (request.serviceType) setServiceType(request.serviceType);
                 if (request.description) setDescription(request.description);
-                if (request.locationText) setLocationText(request.locationText);
-                if (request.preferredTime) setPreferredTime(request.preferredTime);
-                if (request.selectedLocation) {
-                    setSelectedLocation(request.selectedLocation);
-                    updateMapRegion(draft.selectedLocation.latitude, draft.selectedLocation.longitude);
+                if (request.locationText) {
+                    setSelectedLocation({
+                        id: -1, // special ID,
+                        label: request.locationText,
+                        latitude: request.locationCoords.latitude,
+                        longitude: request.locationCoords.longitude,
+                        source: request.locationSource,
+                    });
+                    updateMapRegion(request.locationCoords.latitude, request.locationCoords.longitude);
                     setShowMap(true); // show map if location is set
                 }
                 if (request.availabilityText) setAvailabilityText(request.availabilityText);
@@ -187,6 +195,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                         headers: {
                             Accept: "application/json",
                             "Accept-Language": "en",
+                            "User-Agent": DEFAULT_NOMINATIM_USER_AGENT,
                         },
                     }
                 );
@@ -318,10 +327,10 @@ export default function CustomerCreateRequestScreen({ route }) {
         setLocationResults([item]); // keep item in dropdown so preview works correctly
     };
 
-    const submit = async () => {
+    const submit = async (continueToNextStep) => {
         if (!userUid) return;
 
-        if (!serviceType.trim() || !description.trim() || !locationQuery.trim() || !availabilityText.trim()) {
+        if (!serviceType.trim() || !description.trim() || !selectedLocation?.label.trim() || !availabilityText.trim()) {
             Alert.alert("Missing info", "Please fill in all fields.");
             return;
         }
@@ -353,18 +362,23 @@ export default function CustomerCreateRequestScreen({ route }) {
                 },
                 locationSource: resolvedLocation.source,
                 availabilityText: availabilityText.trim(),
-                status: "open",
+                status: "draft", // for now, there is still more info needed so is a draft
                 acceptedByUid: null,
                 acceptedByName: null,
-                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
             };
             if (request == null) {
-                await setDoc(docRef, { ...requestData, createdAt: Timestamp.now() });
+                await setDoc(docRef, requestData);
             } else {
                 await updateDoc(docRef, requestData);
             }
 
-            navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
+            if (continueToNextStep) {
+                navigation.navigate('CarDetailsForm', { requestId }); // go to next step, passing ID of request
+            } else {
+                // save as draft and go to drafts screen
+                navigation.popTo('Home', { screen: 'CustomerDashboard', params: { screen: 'RequestDrafts' }});
+            }
 
         } catch (e) {
             console.warn(e);
@@ -378,7 +392,7 @@ export default function CustomerCreateRequestScreen({ route }) {
     const renderDetailingTypeDropdownPicker = () => {
         return (
             <View>
-                <Text>
+                <Text style={{ marginBottom: 4 }}>
                     {detailingTypes?.find(type => type.name === serviceType)?.description}
                 </Text>
                 <DropDownPicker
@@ -416,7 +430,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                             {isSearching ? (
                                 <ActivityIndicator />
                             ) : (
-                                <Text>There's nothing to show!</Text>
+                                <Text>Type a location in the search bar to see results</Text>
                             )}
                         </View>
                     )}
@@ -478,11 +492,11 @@ export default function CustomerCreateRequestScreen({ route }) {
                     <Pressable
                         onPress={useCurrentLocation}
                         disabled={isFetchingLocation}
-                        style={{
-                            ...styles.button,
-                            ...styles.buttonPlain,
-                            opacity: isFetchingLocation ? 0.7 : 1,
-                        }}
+                        style={[
+                            styles.button,
+                            styles.buttonPlain,
+                            { opacity: isFetchingLocation ? 0.7 : 1 },
+                        ]}
                     >
                         {isFetchingLocation ? (
                             <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 10 }}>
@@ -499,7 +513,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                     {selectedLocation && (
                         <Pressable
                             onPress={() => setShowMap((current) => !current)}
-                            style={{ ...styles.button, ...styles.buttonPlain }}
+                            style={[styles.button, styles.buttonPlain]}
                         >
                             <Text style={styles.buttonText}>{showMap ? "Hide Map" : "Show Map"}</Text>
                         </Pressable>
@@ -518,25 +532,45 @@ export default function CustomerCreateRequestScreen({ route }) {
                         </View>
                     )}
 
-                    <Text style={styles.inputLabel}>When are you available?</Text>
+                    <View>
+                        <Text style={styles.inputLabel}>When are you available?</Text>
+                        <Text>
+                            Let us know around when you may be available. This could be a specific date,
+                            or a periodic time such as every Tuesday from 5:00&ndash;7:00pm.
+                        </Text>
+                    </View>
                     <TextInput
                         value={availabilityText}
                         onChangeText={setAvailabilityText}
                         placeholder="Weekend afternoon, etc."
-                        style={styles.textInput}
+                        multiline
+                        style={[styles.textInput, { minHeight: 90, textAlignVertical: "top" }]}
                     />
 
-                    <Pressable
-                        onPress={submit}
-                        disabled={isSubmitting}
-                        style={{
-                            ...styles.button,
-                            ...styles.buttonPlain,
-                            opacity: isSubmitting ? 0.7 : 1,
-                        }}
-                    >
-                        <Text style={styles.buttonText}>Submit</Text>
-                    </Pressable>
+                    <View style={styles.row}>
+                        <Pressable
+                            onPress={() => submit(false)}
+                            disabled={isSubmitting}
+                            style={[
+                                styles.button,
+                                styles.buttonStretch,
+                                isSubmitting ? styles.buttonDisabled : styles.buttonPlain,
+                            ]}
+                        >
+                            <Text style={styles.buttonText}>Save as Draft</Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={() => submit(true)}
+                            disabled={isSubmitting}
+                            style={[
+                                styles.button,
+                                styles.buttonStretch,
+                                isSubmitting ? styles.buttonDisabled : styles.buttonPrimary,
+                            ]}
+                        >
+                            <Text style={styles.buttonText}>Submit</Text>
+                        </Pressable>
+                    </View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>

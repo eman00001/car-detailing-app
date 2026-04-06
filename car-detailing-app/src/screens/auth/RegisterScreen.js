@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { View, TextInput, Text, Pressable, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
+import { View, TextInput, Text, Pressable, KeyboardAvoidingView, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 
 import styles from '../../stylesheet';
@@ -37,8 +37,9 @@ export default function RegisterScreen() {
 
         try {
             const response = await createUserWithEmailAndPassword(firebase_auth, email, password);
-            const docRef = doc(db, 'users', response.uid); // store user's name in Firestore
+            const docRef = doc(db, 'users', response.user.uid); // store user's name in Firestore
             await setDoc(docRef, { name });
+            console.log('Created user!');
             // loading finishes when App.js handles auth, so do not change here
         } catch (error) {
             console.warn(error);
@@ -56,7 +57,7 @@ export default function RegisterScreen() {
                 behavior='padding'
                 keyboardVerticalOffset={navigationHeaderHeight}
             >
-                <ScrollView>
+                <ScrollView contentContainerStyle={styles.paddedScrollContainer}>
                     <View style={styles.authContainer}>
                         <Image
                             style={styles.logo}
@@ -109,13 +110,17 @@ export default function RegisterScreen() {
                             />
                         </View>
                         <Pressable
-                            style={[styles.button, loading ? styles.buttonDisabled : styles.buttonPlain]}
+                            style={[styles.button, loading ? styles.buttonDisabled : styles.buttonPrimary]}
                             disabled={loading}
                             onPress={handleRegister}
                         >
-                            <Text style={styles.buttonText}>
-                                Register
-                            </Text>
+                            {loading ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    Register
+                                </Text>
+                            )}
                         </Pressable>
                     </View>
                 </ScrollView>

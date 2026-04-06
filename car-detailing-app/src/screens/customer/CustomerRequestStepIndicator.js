@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { PRIMARY_FILL_DARK_COLOR, PRIMARY_TEXT_COLOR } from '../../stylesheet';
+import styles, { PRIMARY_FILL_DARK_COLOR, PRIMARY_TEXT_COLOR } from '../../stylesheet';
 
 // the customer request has the following 4 steps
 const STEPS = [
@@ -25,7 +25,7 @@ const STEPS = [
 export default function CustomerRequestStepIndicator({ currentStep }) {
     return (
         <View style={stepIndicatorStyles.container}>
-            <View style={stepIndicatorStyles.currentStepContainer}>
+            <View style={styles.row}>
                 <View style={stepIndicatorStyles.currentStepIcon}>
                     <Text style={stepIndicatorStyles.currentStepIconText}>
                         {currentStep}
@@ -57,12 +57,6 @@ const stepIndicatorStyles = StyleSheet.create({
         alignItems: 'center',
         gap: 12,
         marginBottom: 24,
-    },
-    currentStepContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-
     },
     currentStepIcon: {
         width: 30,

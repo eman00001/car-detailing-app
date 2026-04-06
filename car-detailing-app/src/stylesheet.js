@@ -1,13 +1,14 @@
 import { StyleSheet } from "react-native";
 
 export const SECONDARY_BG_COLOR = 'rgba(255, 251, 249, 1)';
-export const SECONDARY_FILL_LIGHT_COLOR = 'rgba(238, 223, 216, 1)';
+export const SECONDARY_FILL_LIGHT_COLOR = 'rgba(247, 231, 224, 1)';
 
 export const PRIMARY_COLOR = 'hsla(195, 100%, 71%, 1.00)';
 export const PRIMARY_BG_COLOR = 'hsla(193, 100%, 98%, 1.00)';
-export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(195, 77%, 90%, 1.00)';
-export const PRIMARY_FILL_DARK_COLOR = 'rgba(52, 171, 210, 1)';
-export const PRIMARY_BORDER_COLOR = 'hsla(196, 54%, 66%, 1.00)';
+export const PRIMARY_FILL_LIGHT_COLOR = 'hsla(194, 38%, 89%, 1.00)';
+export const PRIMARY_FILL_DARK_COLOR = 'rgba(8, 159, 210, 1)';
+export const PRIMARY_FILL_MUTED_COLOR = 'rgba(105, 164, 182, 1)';
+export const PRIMARY_DISABLED_COLOR = 'hsla(196, 13%, 59%, 1.00)';
 export const PRIMARY_TEXT_COLOR = 'hsla(196, 100%, 23%, 1.00)';
 
 export default StyleSheet.create({
@@ -39,6 +40,19 @@ export default StyleSheet.create({
         paddingBottom: 18, // scroll views don't apply padding to bottom, so new additional rule
     },
     listContainer: {
+        gap: 12,
+        paddingInline: 6, // enough for scrollbar
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    rowStart: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
         gap: 12,
     },
 
@@ -90,32 +104,46 @@ export default StyleSheet.create({
 
     // button stylings
     button: {
-        borderColor: PRIMARY_BORDER_COLOR,
-        borderWidth: 1,
         borderRadius: 10,
         padding: 10,
     },
+    buttonSmall: {
+        borderRadius: 8,
+        padding: 8,
+    },
+    buttonStretch: {
+        flex: 1,
+    },
     buttonText: {
-        color: PRIMARY_TEXT_COLOR,
+        color: '#FFF',
         fontSize: 20,
         fontWeight: 700,
         textAlign: 'center',
     },
+    buttonTextSmall: {
+        fontSize: 15,
+    },
     buttonPlain: {
-        backgroundColor: PRIMARY_FILL_LIGHT_COLOR,
+        backgroundColor: PRIMARY_FILL_MUTED_COLOR,
     },
     buttonPrimary: {
-        backgroundColor: '#007AFF',
-        borderColor: '#007AFF',
+        backgroundColor: PRIMARY_FILL_DARK_COLOR,
     },
     buttonDisabled: {
-        backgroundColor: PRIMARY_BORDER_COLOR,
+        backgroundColor: PRIMARY_DISABLED_COLOR,
+    },
+
+    // space stylings
+    spaceBottom: {
+        marginBottom: 12,
     },
     
     // link stylings
     linkText: {
         fontSize: 18,
-        textDecorationLine: 'underline'
+        marginBottom: 12,
+        textDecorationLine: 'underline',
+        color: PRIMARY_TEXT_COLOR,
     },
 
     // misc stylings
@@ -161,24 +189,28 @@ export default StyleSheet.create({
     service: {
         fontSize: 18,
         fontWeight: "600",
+        marginBottom: 2,
+    },
+    description: {
+        fontSize: 16,
         marginBottom: 4,
     },
     vehicle: {
         fontSize: 16,
-        color: "#444",
-        marginBottom: 6,
+        color: "#777",
     },
     date: {
         fontSize: 14,
-        color: "#666",
-        marginBottom: 8,
+        color: "#777",
+    },
+    updatedAtTime: {
+        fontSize: 14,
+        color: '#777',
+        marginTop: 6,
     },
     status: {
         fontSize: 14,
         fontWeight: "700",
-    },
-    detailScroll: {
-        padding: 16,
     },
     detailSection: {
         marginBottom: 18,
@@ -205,11 +237,6 @@ export default StyleSheet.create({
         overflow: 'hidden',
         marginBottom: 18,
     },
-    detailActionRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 18,
-    },
     cardPressed: {
         opacity: 0.7,
     },
@@ -217,11 +244,8 @@ export default StyleSheet.create({
         flex: 1
     },
     logo: {
-        width: 200,
-        height: 200,
+        width: 250,
+        height: 250,
         alignSelf: 'center',
-        borderColor: PRIMARY_COLOR,
-        borderWidth: 5,
-        borderRadius: 5,
     }
 });

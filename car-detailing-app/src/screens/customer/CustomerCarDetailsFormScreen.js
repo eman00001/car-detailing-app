@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, ScrollView, Text, ActivityIndicator, FlatList, Pressable, StyleSheet, BackHandler } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ErrorScreen from '../ErrorScreen';
 
@@ -92,6 +92,9 @@ export default function CarDetailsFormScreen({ route }) {
 
     // store user selections of car interior color
     const [selectedCarInteriorColor, setSelectedCarInteriorColor] = useState(null);
+
+    // store whether the submit button is being pressed
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // create objects for each group of states so that easy to pass around
     const carMakesData = {
@@ -353,7 +356,8 @@ export default function CarDetailsFormScreen({ route }) {
     }, [carTrims, selectedCarTrim])
 
     // handle saving the selections to the request on submit
-    const submit = async () => {
+    const submit = async (continueToNextStep) => {
+        setIsSubmitting(true); // begin submitting
         const requestDoc = doc(db, 'requests', request.id);
         try {
             await updateDoc(requestDoc, {
@@ -366,9 +370,17 @@ export default function CarDetailsFormScreen({ route }) {
                 carInteriorColorRgb: selectedCarInteriorColor?.rgb ?? null,
                 estimatedCost: estimatedCost ?? null,
             });
-            navigation.navigate('TakePhoto', { requestId: request.id }); // go to next step, which is take photo of car
+            if (continueToNextStep) {
+                // go to next step, which is take photo of car
+                navigation.navigate('TakePhoto', { requestId: request.id });
+            } else {
+                // save as draft and go to drafts screen
+                navigation.popTo('Home', { screen: 'CustomerDashboard', params: { screen: 'RequestDrafts' }});
+            }
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -547,9 +559,30 @@ export default function CarDetailsFormScreen({ route }) {
                 {estimatedCost != null &&
                     renderFieldText(formatterCAD.format(estimatedCost), 'Estimated Cost')}
 
-                <Pressable onPress={submit} style={{ ...styles.button, ...styles.buttonPlain }}>
-                    <Text style={styles.buttonText}>Submit</Text>
-                </Pressable>
+                <View style={styles.row}>
+                    <Pressable
+                        onPress={() => submit(false)}
+                        disabled={isSubmitting}
+                        style={[
+                            styles.button,
+                            styles.buttonStretch,
+                            isSubmitting ? styles.buttonDisabled : styles.buttonPlain
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>Save as Draft</Text>
+                    </Pressable>
+                    <Pressable
+                        onPress={() => submit(true)}
+                        disabled={isSubmitting}
+                        style={[
+                            styles.button,
+                            styles.buttonStretch,
+                            isSubmitting ? styles.buttonDisabled : styles.buttonPrimary
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </Pressable>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
