@@ -162,7 +162,7 @@ export default StyleSheet.create({
         fontSize: 18,
         lineHeight: 20,
         fontWeight: 700,
-        borderRadius: '50%',
+        borderRadius: 99999,
         textAlign: 'center',
     },
     card: {

@@ -138,7 +138,7 @@ const chatsListStyles = StyleSheet.create({
         width: 50,
         height: 50,
         backgroundColor: '#777',
-        borderRadius: '50%',
+        borderRadius: 99999,
     },
     itemText: {
         fontSize: 18,
