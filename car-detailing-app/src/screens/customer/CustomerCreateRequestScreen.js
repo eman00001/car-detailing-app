@@ -14,6 +14,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomerRequestStepIndicator from "./CustomerRequestStepIndicator";
 import { useNavigation } from "@react-navigation/native";
 
+// define default user agent to send to nominatim request, since requires to prevent misuse
+const DEFAULT_NOMINATIM_USER_AGENT = "Pere-Clean Faclon Detaining Services App";
+
 function buildLocationLabel(parts) {
     if (!parts) return "";
 
@@ -40,6 +43,7 @@ async function reverseGeocodeCoords(latitude, longitude) {
             headers: {
                 Accept: "application/json",
                 "Accept-Language": "en",
+                "User-Agent": DEFAULT_NOMINATIM_USER_AGENT,
             },
         }
     );
@@ -191,6 +195,7 @@ export default function CustomerCreateRequestScreen({ route }) {
                         headers: {
                             Accept: "application/json",
                             "Accept-Language": "en",
+                            "User-Agent": DEFAULT_NOMINATIM_USER_AGENT,
                         },
                     }
                 );

@@ -133,6 +133,12 @@ export default function CustomerTakePhotoScreen({ route }) {
                     <Pressable onPress={requestPermission} style={[styles.button, styles.buttonPlain, { width: "100%" }]}>
                         <Text style={styles.buttonText}>Allow Camera Access</Text>
                     </Pressable>
+                    <Pressable
+                        onPress={skipStep}
+                        style={[styles.button, styles.buttonPlain, { width: "100%"}]}
+                    >
+                        <Text style={styles.buttonText}>Skip Step</Text>
+                    </Pressable>
                 </View>
             </SafeAreaView>
         );
