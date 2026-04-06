@@ -244,11 +244,8 @@ export default StyleSheet.create({
         flex: 1
     },
     logo: {
-        width: 200,
-        height: 200,
+        width: 250,
+        height: 250,
         alignSelf: 'center',
-        borderColor: PRIMARY_COLOR,
-        borderWidth: 5,
-        borderRadius: 5,
     }
 });
