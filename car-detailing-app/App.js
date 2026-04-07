@@ -3,11 +3,13 @@ import { createStaticNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { firebase_auth, db } from './src/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
@@ -15,11 +17,26 @@ import LogOutScreen from './src/screens/auth/LogOutScreen';
 import DetailerDashboardScreen from './src/screens/detailer/DetailerDashboardScreen';
 import DetailerJobsScreen from './src/screens/detailer/DetailerJobsScreen';
 import CustomerDashboardScreen from './src/screens/customer/CustomerDashboardScreen';
+import CustomerCreateRequestScreen from './src/screens/customer/CustomerCreateRequestScreen';
+import CustomerTakePhotoScreen from './src/screens/customer/CustomerTakePhotoScreen';
 import ChatsListScreen from './src/screens/chat/ChatsListScreen';
 import ChatMessagesScreen from './src/screens/chat/ChatMessagesScreen';
 import ErrorScreen from './src/screens/ErrorScreen';
 import LoadingScreen from './src/screens/LoadingScreen';
 import DetailerMapScreen from './src/screens/detailer/DetailerMapOfCustomersScreen';
+import CarDetailsFormScreen from './src/screens/customer/CustomerCarDetailsFormScreen';
+import CustomerRequestConfirmScreen from './src/screens/customer/CustomerRequestConfirmScreen';
+import SuccessTransitionScreen from './src/screens/SuccessTransitionScreen';
+import DetailerViewCustomerScreen from './src/screens/detailer/DetailerViewCustomerScreen';
+import CustomerRequestDraftsScreen from './src/screens/customer/CustomerRequestDraftsScreen';
+import { PRIMARY_TEXT_COLOR } from './src/stylesheet';
+import CustomerRequestDetailsScreen from './src/screens/customer/CustomerRequestDetailsScreen';
+import DetailerAllRequestsMapScreen from './src/screens/detailer/DetailerAllRequestsMapScreen';
+
+const TAB_ICON_SIZE = 40;
+const TAB_LABEL_HEIGHT = 25;
+const TAB_ICON_FOCUSED_COLOR = PRIMARY_TEXT_COLOR;
+const TAB_ICON_UNFOCUSED_COLOR = '#777';
 
 export default function App() {
     const [loading, setLoading] = useState(true);
@@ -42,6 +59,7 @@ export default function App() {
                         await AsyncStorage.setItem('userName', data.name); // store user name in async storage for quick retrieval
                     } else {
                         setIsDetailer(false); // if not found, default to customer
+                        await AsyncStorage.removeItem('userName'); // reset user name
                     }
                     setIsSignedIn(true);
 
@@ -78,6 +96,16 @@ export default function App() {
         );
     }
 
+    const TabIcon = ({ name, focused }) => (
+        <View style={{ padding: 5 }}>
+            <FontAwesome
+                name={name}
+                color={focused ? TAB_ICON_FOCUSED_COLOR : TAB_ICON_UNFOCUSED_COLOR}
+                size={TAB_ICON_SIZE - 10}
+            />
+        </View>
+    );
+
     let Navigation;
 
     if (isSignedIn) {
@@ -99,43 +127,129 @@ export default function App() {
             },
         })
 
-        
-
         if (isDetailer) {
-            const TabNavigator = createBottomTabNavigator({
-                initialRouteName: 'DetailerDashboard',
+            const DetailerDashboardStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerDashboardHome',
                 screenOptions: {
-                    headerShown: false,
+                    headerBackButtonDisplayMode: 'minimal',
                 },
                 screens: {
-                    DetailerDashboard: {
+                    DetailerDashboardHome: {
                         screen: DetailerDashboardScreen,
                         options: {
-                            title: 'Detailer Dashboard',
+                            title: 'Dashboard',
+                            headerShown: false,
                         },
                     },
-                    DetailerJobsScreen: {
+                    DetailerDashboardMap: {
+                        screen: DetailerMapScreen,
+                        options: {
+                            title: 'Open Requests Map',
+                        },
+                    },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
+                },
+            });
+
+            const DetailerJobsStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerJobsHome',
+                screenOptions: {
+                    headerBackButtonDisplayMode: 'minimal',
+                },
+                screens: {
+                    DetailerJobsHome: {
                         screen: DetailerJobsScreen,
                         options: {
                             title: 'Jobs',
                         },
                     },
-                    DetailerMapScreen: {
+                    DetailerJobsMap: {
                         screen: DetailerMapScreen,
                         options: {
+                            title: 'Jobs Map',
+                        },
+                    },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
+                },
+            });
+
+            const DetailerMapStack = createNativeStackNavigator({
+                initialRouteName: 'DetailerMap',
+                screenOptions: {
+                    headerBackButtonDisplayMode: 'minimal',
+                },
+                screens: {
+                    DetailerMap: {
+                        screen: DetailerAllRequestsMapScreen,
+                        options: {
                             title: 'Map',
+                        },
+                    },
+                    DetailerRequestDetails: {
+                        screen: DetailerViewCustomerScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
+                },
+            })
+
+            const TabNavigator = createBottomTabNavigator({
+                initialRouteName: 'DetailerDashboard',
+                screenOptions: {
+                    headerShown: false,
+                    tabBarStyle: {
+                        height: TAB_ICON_SIZE + TAB_LABEL_HEIGHT,
+                    },
+                    tabBarIconStyle: {
+                        width: '100%',
+                        height: TAB_ICON_SIZE,
+                    },
+                },
+                screens: {
+                    DetailerDashboard: {
+                        screen: DetailerDashboardStack,
+                        options: {
+                            title: 'Dashboard',
+                            tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />, 
+                        },
+                    },
+                    DetailerJobs: {
+                        screen: DetailerJobsStack,
+                        options: {
+                            title: 'Jobs',
+                            tabBarIcon: ({ focused }) => <TabIcon name="suitcase" focused={focused} />,
+                        },
+                    },
+                    DetailerMapScreen: {
+                        screen: DetailerMapStack,
+                        options: {
+                            title: 'Map',
+                            tabBarIcon: ({ focused }) => <TabIcon name="map" focused={focused} />,
                         },
                     },
                     DetailerChats: {
                         screen: ChatNavigator,
                         options: {
                             title: 'Chats',
+                            tabBarIcon: ({ focused }) => <TabIcon name="comments" focused={focused} />,
                         },
                     },
                     LogOut: {
                         screen: LogOutScreen,
                         options: {
                             title: 'Log Out',
+                            tabBarIcon: ({ focused }) => <TabIcon name="user-times" focused={focused} />,
                         },
                     },
                 },
@@ -143,33 +257,110 @@ export default function App() {
             Navigation = createStaticNavigation(TabNavigator);
 
         } else {
+            const CustomerRequestsStack = createNativeStackNavigator({
+                initialRouteName: 'AllRequests',
+                screens: {
+                    AllRequests: {
+                        screen: CustomerDashboardScreen,
+                        options: {
+                            title: 'All',
+                            headerShown: false,
+                        },
+                    },
+                    RequestDrafts: {
+                        screen: CustomerRequestDraftsScreen,
+                        options: {
+                            title: 'Request Drafts',
+                        },
+                    },
+                    RequestDetails: {
+                        screen: CustomerRequestDetailsScreen,
+                        options: {
+                            title: 'Request Details',
+                        },
+                    },
+                }
+            })
             const TabNavigator = createBottomTabNavigator({
                 initialRouteName: 'CustomerDashboard',
                 screenOptions: {
                     headerShown: false,
+                    tabBarStyle: {
+                        height: TAB_ICON_SIZE + TAB_LABEL_HEIGHT,
+                    },
+                    tabBarIconStyle: {
+                        width: '100%',
+                        height: TAB_ICON_SIZE,
+                    },
                 },
                 screens: {
                     CustomerDashboard: {
-                        screen: CustomerDashboardScreen,
+                        screen: CustomerRequestsStack,
                         options: {
-                            title: 'Customer Dashboard',
+                            title: 'Dashboard',
+                            tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
                         },
                     },
                     CustomerChats: {
                         screen: ChatNavigator,
                         options: {
                             title: 'Chats',
+                            tabBarIcon: ({ focused }) => <TabIcon name="comments" focused={focused} />,
                         },
                     },
                     LogOut: {
                         screen: LogOutScreen,
                         options: {
                             title: 'Log Out',
+                            tabBarIcon: ({ focused }) => <TabIcon name="user-times" focused={focused} />,
                         },
                     },
                 },
             });
-            Navigation = createStaticNavigation(TabNavigator);
+            const CreateRequestStack = createNativeStackNavigator({
+                initialRouteName: 'Home',
+                screens: {
+                    Home: {
+                        screen: TabNavigator,
+                        options: {
+                            title: 'Home',
+                            headerShown: false,
+                        },
+                    },
+                    CreateRequest: {
+                        screen: CustomerCreateRequestScreen,
+                        options: {
+                            title: 'Create Request',
+                        },
+                    },
+                    CarDetailsForm: {
+                        screen: CarDetailsFormScreen,
+                        options: {
+                            title: 'Car Details',
+                        },
+                    },
+                    TakePhoto: {
+                        screen: CustomerTakePhotoScreen,
+                        options: {
+                            title: 'Take Photo',
+                        },
+                    },
+                    ConfirmRequest: {
+                        screen: CustomerRequestConfirmScreen,
+                        options: {
+                            title: 'Confirm Request',
+                        },
+                    },
+                    SuccessTransition: {
+                        screen: SuccessTransitionScreen,
+                        options: {
+                            title: 'Success!',
+                            headerShown: false,
+                        }
+                    }
+                },
+            });
+            Navigation = createStaticNavigation(CreateRequestStack);
         }
 
     } else {

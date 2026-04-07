@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, Image, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, FlatList, Image, KeyboardAvoidingView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { formatDateTime } from '../../utils';
-import styles from '../../stylesheet';
+import styles, {
+    PRIMARY_BG_COLOR, PRIMARY_DISABLED_COLOR, PRIMARY_FILL_DARK_COLOR,
+    PRIMARY_FILL_LIGHT_COLOR, PRIMARY_FILL_MUTED_COLOR, PRIMARY_TEXT_COLOR,
+    SECONDARY_FILL_LIGHT_COLOR
+} from '../../stylesheet';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { db } from '../../firebaseConfig';
-import { onSnapshot, collection, doc, query, orderBy, setDoc, serverTimestamp } from 'firebase/firestore';
+import { onSnapshot, collection, doc, query, orderBy, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 import LoadingScreen from '../LoadingScreen';
 import ErrorScreen from '../ErrorScreen';
@@ -53,7 +57,7 @@ export default function ChatMessagesScreen({ route }) {
     // get chat messages, listening to realtime changes
     useEffect(() => {
         if (userUid == null) return; // wait until user ID found
-        
+
         setLoading(true); // begin loading when querying for messages
 
         // query messages for chat specified by Chat ID passed on route params, order in order sent
@@ -119,13 +123,20 @@ export default function ChatMessagesScreen({ route }) {
 
             const fileURLs = await uploadImages(currImages, CLOUDINARY_CHAT_MESSAGE_ATTACHMENT_UPLOAD_PRESET);
 
+            const chatDocRef = doc(db, 'chats', chatId);
             const messageDocRef = doc(collection(db, 'chats', chatId, 'messages'));
-            await setDoc(messageDocRef, {
-                userId: userUid,
-                content: currMessage,
-                attachments: fileURLs,
-                timestamp: serverTimestamp(),
-            });
+            await Promise.all([
+                updateDoc(chatDocRef, {
+                    mostRecentMessage: currMessage || 'Attachment',
+                    mostRecentTimestamp: serverTimestamp(),
+                }),
+                setDoc(messageDocRef, {
+                    userId: userUid,
+                    content: currMessage,
+                    attachments: fileURLs,
+                    timestamp: serverTimestamp(),
+                }),
+            ]);
             setCurrMessage(''); // clear current message and attachments
             setCurrImages([]);  //
         } catch (e) {
@@ -152,8 +163,8 @@ export default function ChatMessagesScreen({ route }) {
         >
             {/* ensure the message input and send button is visible above keyboard */}
             <KeyboardAvoidingView
-                style={styles.container}
                 behavior='padding'
+                style={styles.container}
                 keyboardVerticalOffset={navigationHeaderHeight}
             >
                 <FlatList
@@ -239,6 +250,7 @@ export default function ChatMessagesScreen({ route }) {
                             disabled={isSending}
                             onPress={handleSendMessage}
                         >
+                            {isSending && <ActivityIndicator color="#FFF" />}
                             <Text style={chatStyles.currMessageBtnText}>Send</Text>
                         </Pressable>
                     </View>
@@ -259,7 +271,7 @@ const chatStyles = StyleSheet.create({
         alignItems: 'flex-end',
     },
     messageBox: {
-        backgroundColor: '#DDD',
+        backgroundColor: SECONDARY_FILL_LIGHT_COLOR,
         maxWidth: '90%', // add subtle size cap to width so that there will be space, makes easier distinguish which side for long messages
         padding: 12,
         borderRadius: 12,
@@ -267,7 +279,7 @@ const chatStyles = StyleSheet.create({
         gap: 12,
     },
     ownMessage: { // change color and direction of speech arrow if own message
-        backgroundColor: '#DDF',
+        backgroundColor: PRIMARY_FILL_LIGHT_COLOR,
         borderEndStartRadius: 12,
         borderEndEndRadius: 0,
         alignItems: 'flex-end',
@@ -284,8 +296,8 @@ const chatStyles = StyleSheet.create({
         alignSelf: 'flex-end', // if own message attachment, push to right of screen
     },
     messageInputContainer: {
-        backgroundColor: '#EEE',
-        borderTopColor: '#DDD',
+        backgroundColor: PRIMARY_BG_COLOR,
+        borderTopColor: PRIMARY_FILL_MUTED_COLOR,
         borderTopWidth: 2,
         padding: 12,
         gap: 6,
@@ -298,24 +310,29 @@ const chatStyles = StyleSheet.create({
         height: 100,
     },
     messageInputRow: {
+        backgroundColor: '#FFF',
+        borderColor: PRIMARY_TEXT_COLOR,
         borderWidth: 1,
         borderRadius: 6,
         padding: 12,
         flexDirection: 'row',
         justifyContent: 'stretch',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         gap: 12,
+        maxHeight: 150,
     },
     messageInput: {
         flex: 1,
     },
     currMessageBtn: {
-        backgroundColor: '#888',
+        flexDirection: 'row',
+        backgroundColor: PRIMARY_FILL_DARK_COLOR,
         padding: 6,
         borderRadius: 6,
+        gap: 6,
     },
     currMessageBtnSending: {
-        backgroundColor: '#555',
+        backgroundColor: PRIMARY_DISABLED_COLOR,
     },
     currMessageBtnText: {
         color: '#FFF',

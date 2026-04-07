@@ -53,7 +53,7 @@ export function formatDateTime(dateTime) {
     // if dateTime is within week, set day string to day of week of date
     } else if (isWithinWeek(dateTime, today)) {
         dayString = DAYS_OF_WEEK[dateTime.getDay()];
-    
+
     // if dateTime has same year as now, don't include in formatted date
     } else if (dateTime.getFullYear() === today.getFullYear()) {
         dayString = dateTime.toLocaleDateString('en-us', {
@@ -79,3 +79,12 @@ export function formatDateTime(dateTime) {
     // return the day and time concatenated
     return `${dayString}, ${timeString}`;
 }
+
+// function converts a number to CAD format
+export const formatterCAD = Intl.NumberFormat('en-us', {
+    style: 'currency',
+    currency: 'CAD',
+});
+
+// function takes a potentially long string an snips it to the first N characters
+export const snippet = (text, maxLength) => text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
