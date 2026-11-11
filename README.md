@@ -86,6 +86,7 @@ You can also document commands to lint the code or run tests. These steps help t
 ## Authors and acknowledgment  
 Shuto Nakayasu  
 Emmanuel Yusuff  
+Belal Al-Dhaibani
 
 ## License
 For open source projects, say how it is licensed.
